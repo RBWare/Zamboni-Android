@@ -11,4 +11,6 @@ data class Team(
     val league: League,
     /** Null when no logo is available; the abbreviation is shown instead. */
     val logo: TeamLogo? = null,
+    /** Brand colors, when the data source provides them. */
+    val colors: TeamColors? = null,
 )

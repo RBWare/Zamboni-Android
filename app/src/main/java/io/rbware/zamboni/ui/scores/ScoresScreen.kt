@@ -71,10 +71,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rbware.zamboni.R
 import io.rbware.zamboni.data.model.League
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -95,6 +99,20 @@ fun ScoresScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
     val scope = rememberCoroutineScope()
+
+    // Live updates: re-fetch on the API's suggested interval, only while the screen is visible.
+    // Restarts after each response, since the API returns a fresh interval every time.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val autoRefreshInterval = state.autoRefreshInterval
+    LaunchedEffect(autoRefreshInterval, state.date) {
+        if (autoRefreshInterval == null) return@LaunchedEffect
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                delay(autoRefreshInterval)
+                viewModel.refreshSilently()
+            }
+        }
+    }
 
     NavigableListDetailPaneScaffold(
         navigator = navigator,
@@ -127,7 +145,8 @@ fun ScoresScreen(
             AnimatedPane {
                 val gameId = navigator.currentDestination?.contentKey
                 GameDetail(
-                    game = state.games?.firstOrNull { it.id == gameId },
+                    gameId = gameId,
+                    listGame = state.games?.firstOrNull { it.id == gameId },
                     today = state.today,
                     showBack = navigator.canNavigateBack(),
                     onBack = { scope.launch { navigator.navigateBack() } },

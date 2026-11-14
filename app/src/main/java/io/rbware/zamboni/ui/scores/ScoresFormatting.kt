@@ -54,7 +54,9 @@ fun periodLabel(period: Int): String = when (period) {
 fun gameStatusText(game: Game): String = when (val status = game.status) {
     GameStatus.Scheduled -> formatTime(game.startTime)
     GameStatus.Postponed -> stringResource(R.string.status_postponed)
+    GameStatus.Cancelled -> stringResource(R.string.status_cancelled)
     is GameStatus.Live -> when {
+        status.shootout -> stringResource(R.string.period_shootout)
         status.intermission -> stringResource(R.string.status_intermission, periodLabel(status.period))
         status.clock != null -> "${periodLabel(status.period)} ${status.clock}"
         else -> periodLabel(status.period)

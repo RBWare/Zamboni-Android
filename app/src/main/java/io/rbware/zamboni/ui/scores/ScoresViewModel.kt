@@ -1,5 +1,6 @@
 package io.rbware.zamboni.ui.scores
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.rbware.zamboni.ZamboniApplication
 import io.rbware.zamboni.data.model.Game
+import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.preferences.ScoresFilter
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
@@ -24,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 data class ScoresUiState(
     val date: LocalDate,
@@ -40,6 +44,11 @@ data class ScoresUiState(
     val loadFailed: Boolean = false,
     /** A refresh failed while older results were on screen; shown once as a snackbar. */
     val refreshFailed: Boolean = false,
+    /**
+     * How often to re-fetch while the screen is visible, or null to not auto-refresh (e.g. all
+     * games are final). Follows the API's suggested interval.
+     */
+    val autoRefreshInterval: Duration? = null,
 ) {
     val isToday get() = date == today
     val hasActiveFilter get() = filter.leagueIds.isNotEmpty() || filter.favoritesOnly
@@ -48,6 +57,8 @@ data class ScoresUiState(
 /** Raw load state for the selected date, before preferences are applied. */
 private data class GamesLoad(
     val games: List<Game>? = null,
+    val suggestedRefresh: Duration? = null,
+    /** A user-visible load (first load or pull-to-refresh) is in progress. */
     val isLoading: Boolean = false,
     val loadFailed: Boolean = false,
     val refreshFailed: Boolean = false,
@@ -89,6 +100,9 @@ class ScoresViewModel(
             isRefreshing = load.isLoading && load.games != null,
             loadFailed = load.loadFailed,
             refreshFailed = load.refreshFailed,
+            autoRefreshInterval = load.suggestedRefresh
+                ?.coerceAtLeast(MIN_AUTO_REFRESH)
+                ?.takeIf { load.games.orEmpty().any { it.status.canChange } },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScoresUiState(selectedDate.value, today))
 
@@ -110,6 +124,15 @@ class ScoresViewModel(
     fun goToToday() = selectDate(today)
 
     fun refresh() = load(clearExisting = false)
+
+    /**
+     * Background refresh for live updates: no spinner, no error message, and skipped if a load
+     * is already running.
+     */
+    fun refreshSilently() {
+        if (loadJob?.isActive == true) return
+        load(clearExisting = false, silent = true)
+    }
 
     fun refreshErrorShown() = gamesLoad.update { it.copy(refreshFailed = false) }
 
@@ -133,24 +156,29 @@ class ScoresViewModel(
         userPreferencesRepository.clearScoresFilters()
     }
 
-    private fun load(clearExisting: Boolean) {
+    private fun load(clearExisting: Boolean, silent: Boolean = false) {
         val date = selectedDate.value
         loadJob?.cancel()
         gamesLoad.update { current ->
-            if (clearExisting) GamesLoad(isLoading = true) else current.copy(isLoading = true, refreshFailed = false)
+            when {
+                clearExisting -> GamesLoad(isLoading = true)
+                silent -> current
+                else -> current.copy(isLoading = true, refreshFailed = false)
+            }
         }
         loadJob = viewModelScope.launch {
             try {
-                val games = scoresRepository.getGames(date)
-                gamesLoad.value = GamesLoad(games = games)
+                val schedule = scoresRepository.getSchedule(date)
+                gamesLoad.value = GamesLoad(games = schedule.games, suggestedRefresh = schedule.suggestedRefresh)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                Log.w(TAG, "Failed to load schedule for $date: $e")
                 gamesLoad.update { current ->
                     current.copy(
                         isLoading = false,
                         loadFailed = current.games == null,
-                        refreshFailed = current.games != null,
+                        refreshFailed = current.games != null && !silent,
                     )
                 }
             }
@@ -158,7 +186,9 @@ class ScoresViewModel(
     }
 
     companion object {
+        private const val TAG = "ScoresViewModel"
         private const val KEY_DATE = "selected_date"
+        private val MIN_AUTO_REFRESH = 5.seconds
 
         val Factory = viewModelFactory {
             initializer {
@@ -172,3 +202,7 @@ class ScoresViewModel(
         }
     }
 }
+
+/** Whether a game in this state can still change (start, score, or finish). */
+private val GameStatus.canChange: Boolean
+    get() = this is GameStatus.Scheduled || this is GameStatus.Live

@@ -37,19 +37,43 @@
     <string name="status_final_ot">Final/OT</string>
     <string name="status_final_so">Final/SO</string>
     <string name="status_postponed">Postponed</string>
+    <string name="status_cancelled">Cancelled</string>
     <string name="status_intermission">%1$s INT</string>
     <string name="period_1">1st</string>
     <string name="period_2">2nd</string>
     <string name="period_3">3rd</string>
     <string name="period_ot">OT</string>
     <string name="period_multi_ot">%1$dOT</string>
+    <string name="period_shootout">SO</string>
 
     <!-- Game detail -->
     <string name="game_matchup">%1$s at %2$s</string>
     <string name="game_score">%1$d - %2$d</string>
     <string name="game_league">League</string>
     <string name="game_start_time">Start time</string>
-    <string name="game_more_coming">Box score, goals and stats will appear here once the hockeynerd.com API is connected.</string>
+    <string name="game_venue">Venue</string>
+    <string name="game_section_scoring">Scoring</string>
+    <string name="game_section_team_stats">Team stats</string>
+    <string name="game_section_info">Game info</string>
+    <string name="game_no_goals">No goals yet</string>
+    <string name="game_period_header">%1$s Period</string>
+    <string name="game_period_overtime">Overtime</string>
+    <string name="game_load_failed">Couldn\'t load game details</string>
+    <string name="game_not_found">Details aren\'t available for this game</string>
+    <string name="goal_unassisted">Unassisted</string>
+    <string name="goal_tag_pp">PP</string>
+    <string name="goal_tag_sh">SH</string>
+    <string name="goal_tag_en">EN</string>
+
+    <!-- Team stats -->
+    <string name="stat_shots_on_goal">Shots on goal</string>
+    <string name="stat_faceoff_percentage">Faceoff %</string>
+    <string name="stat_power_play">Power play</string>
+    <string name="stat_penalty_minutes">Penalty minutes</string>
+    <string name="stat_hits">Hits</string>
+    <string name="stat_blocked_shots">Blocked shots</string>
+    <string name="stat_giveaways">Giveaways</string>
+    <string name="stat_takeaways">Takeaways</string>
 
     <string name="news_placeholder">News is coming soon</string>
     <string name="settings_favorite_teams">Favorite teams</string>

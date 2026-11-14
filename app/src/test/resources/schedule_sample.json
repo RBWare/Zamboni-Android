@@ -1,0 +1,196 @@
+{
+  "date": "2026-11-14",
+  "today": "2026-11-14",
+  "prevDate": "2026-11-13",
+  "nextDate": "2026-11-15",
+  "games": [
+    {
+      "id": 2026020321,
+      "gameType": 2,
+      "gameState": "LIVE",
+      "gameScheduleState": "OK",
+      "startTimeUTC": "2026-11-14T18:00:00Z",
+      "venue": "Veikkaus Arena",
+      "period": {
+        "number": 2,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "clock": {
+        "timeRemaining": "09:08",
+        "secondsRemaining": 548,
+        "running": true,
+        "inIntermission": false
+      },
+      "away": {
+        "abbrev": "SEA",
+        "name": "Kraken",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/SEA_light.svg",
+        "primary": "#001628",
+        "score": 1,
+        "record": "9-7-1",
+        "goalsPerGame": 3.29411,
+        "powerPlayPct": 0.218181,
+        "penaltyKillPct": 0.652174
+      },
+      "home": {
+        "abbrev": "CAR",
+        "name": "Hurricanes",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CAR_light.svg",
+        "primary": "#CE1126",
+        "score": 4,
+        "record": "15-3-2",
+        "goalsPerGame": 4.1,
+        "powerPlayPct": 0.227272,
+        "penaltyKillPct": 0.854839
+      }
+    },
+    {
+      "id": 2026020312,
+      "gameType": 2,
+      "gameState": "FUT",
+      "gameScheduleState": "OK",
+      "startTimeUTC": "2026-11-14T20:30:00Z",
+      "venue": "United Center",
+      "period": null,
+      "clock": null,
+      "away": {
+        "abbrev": "WPG",
+        "name": "Jets",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/WPG_light.svg",
+        "primary": "#041E42",
+        "score": null,
+        "record": "9-8-3",
+        "goalsPerGame": 3.05,
+        "powerPlayPct": 0.241935,
+        "penaltyKillPct": 0.745763
+      },
+      "home": {
+        "abbrev": "CHI",
+        "name": "Blackhawks",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CHI_light.svg",
+        "primary": "#CF0A2C",
+        "score": null,
+        "record": "5-13-1",
+        "goalsPerGame": 2.21052,
+        "powerPlayPct": 0.111111,
+        "penaltyKillPct": 0.783334
+      }
+    },
+    {
+      "id": 2026020310,
+      "gameType": 2,
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "startTimeUTC": "2026-11-14T02:00:00Z",
+      "venue": "Rogers Arena",
+      "period": {
+        "number": 3,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "clock": {
+        "timeRemaining": "00:00",
+        "secondsRemaining": 0,
+        "running": false,
+        "inIntermission": false
+      },
+      "away": {
+        "abbrev": "NYR",
+        "name": "Rangers",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/NYR_light.svg",
+        "primary": "#0038A8",
+        "score": 5,
+        "record": "12-8-1",
+        "goalsPerGame": 3.04761,
+        "powerPlayPct": 0.206896,
+        "penaltyKillPct": 0.890625
+      },
+      "home": {
+        "abbrev": "VAN",
+        "name": "Canucks",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/VAN_light.svg",
+        "primary": "#00205B",
+        "score": 1,
+        "record": "3-17-1",
+        "goalsPerGame": 2.71428,
+        "powerPlayPct": 0.194029,
+        "penaltyKillPct": 0.626866
+      }
+    },
+    {
+      "id": 2026020311,
+      "gameType": 2,
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "startTimeUTC": "2026-11-14T03:00:00Z",
+      "venue": "T-Mobile Arena",
+      "period": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "clock": {
+        "timeRemaining": "00:00",
+        "secondsRemaining": 0,
+        "running": false,
+        "inIntermission": false
+      },
+      "away": {
+        "abbrev": "NSH",
+        "name": "Predators",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/NSH_light.svg",
+        "primary": "#FFB81C",
+        "score": 3,
+        "record": "11-4-5",
+        "goalsPerGame": 3,
+        "powerPlayPct": 0.257575,
+        "penaltyKillPct": 0.896552
+      },
+      "home": {
+        "abbrev": "VGK",
+        "name": "Golden Knights",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/VGK_light.svg",
+        "primary": "#B4975A",
+        "score": 2,
+        "record": "13-5-3",
+        "goalsPerGame": 3.33333,
+        "powerPlayPct": 0.274193,
+        "penaltyKillPct": 0.777778
+      }
+    },
+    {
+      "id": 1,
+      "gameType": 2,
+      "gameState": "FUT",
+      "gameScheduleState": "OK",
+      "startTimeUTC": "2026-11-14T20:30:00Z",
+      "venue": "United Center",
+      "period": null,
+      "clock": null,
+      "away": {
+        "abbrev": "XYZ",
+        "name": "Testers",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/WPG_light.svg",
+        "primary": "#041E42",
+        "score": null,
+        "record": "9-8-3",
+        "goalsPerGame": 3.05,
+        "powerPlayPct": 0.241935,
+        "penaltyKillPct": 0.745763
+      },
+      "home": {
+        "abbrev": "CHI",
+        "name": "Blackhawks",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CHI_light.svg",
+        "primary": "#CF0A2C",
+        "score": null,
+        "record": "5-13-1",
+        "goalsPerGame": 2.21052,
+        "powerPlayPct": 0.111111,
+        "penaltyKillPct": 0.783334
+      }
+    }
+  ],
+  "refreshMs": 10222
+}

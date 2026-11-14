@@ -1,16 +1,18 @@
 package io.rbware.zamboni.data.placeholder
 
+import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.logos.NhlLogos
 import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.Team
 
 /**
- * Static leagues and teams used until the hockeynerd.com API is integrated.
- * IDs and abbreviations are temporary and will change to the API's values.
+ * Static team list used for favorites until a hockeynerd.com teams endpoint is integrated.
+ * NHL team IDs are "nhl-" plus the lowercase NHL abbreviation, matching what the schedule
+ * endpoint returns, so favorites line up with real games.
  */
 object PlaceholderHockeyData {
-    val NHL = League(id = "nhl", shortName = "NHL", name = "National Hockey League")
-    val AHL = League(id = "ahl", shortName = "AHL", name = "American Hockey League")
+    private val NHL = Leagues.NHL
+    private val AHL = Leagues.AHL
 
     val leagues: List<League> = listOf(NHL, AHL)
 

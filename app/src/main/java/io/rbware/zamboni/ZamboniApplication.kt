@@ -36,7 +36,7 @@ class ZamboniApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory())
+                add(OkHttpNetworkFetcherFactory(callFactory = { container.okHttpClient }))
                 add(SvgDecoder.Factory())
             }
             .memoryCache {
