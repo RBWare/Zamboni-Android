@@ -12,6 +12,12 @@ val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
 }
 
+/** Release signing details from keystore.properties (not committed). Absent: release is unsigned. */
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    keystorePropertiesFile.takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+
 android {
     namespace = "io.rbware.zamboni"
     compileSdk {
@@ -29,6 +35,17 @@ android {
 
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -40,6 +57,7 @@ android {
         release {
             // Distributed builds never carry a Gamesheet key; users enter their own in Settings.
             buildConfigField("String", "GAMESHEET_API_KEY", "\"\"")
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
