@@ -104,6 +104,12 @@
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_summary">Use colors from your wallpaper (Android 12+)</string>
     <string name="settings_version">Version</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_summary">Version %1$s</string>
+    <string name="about_version_value">%1$s (%2$d)</string>
+    <string name="about_package">Package name</string>
+    <string name="about_developer">Developed by</string>
+    <string name="about_developer_name" translatable="false">RBWare</string>
     <string name="back">Back</string>
     <string name="close">Close</string>
 

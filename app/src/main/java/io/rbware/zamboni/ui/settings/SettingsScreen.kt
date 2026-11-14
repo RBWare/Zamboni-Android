@@ -52,6 +52,7 @@ enum class SettingsSection(@param:StringRes val title: Int, val icon: ImageVecto
     TEAMS(R.string.settings_favorite_teams, Icons.Outlined.Star),
     NOTIFICATIONS(R.string.settings_notifications, Icons.Outlined.Notifications),
     NEWS_SOURCES(R.string.settings_news_sources, Icons.Outlined.Newspaper),
+    ABOUT(R.string.settings_about, Icons.Outlined.Info),
 }
 
 /**
@@ -102,6 +103,7 @@ fun SettingsScreen(
                             })
                         SettingsSection.NEWS_SOURCES ->
                             NewsSourcePicker(state.newsSources, state.preferences.newsSourceIds, viewModel::toggleNewsSource)
+                        SettingsSection.ABOUT -> AboutSection()
                         null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(stringResource(R.string.settings_select_section), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -124,7 +126,7 @@ private fun SettingsList(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_settings)) }) },
     ) { padding ->
         LazyColumn(contentPadding = padding) {
-            SettingsSection.entries.forEach { section ->
+            SettingsSection.entries.filter { it != SettingsSection.ABOUT }.forEach { section ->
                 item(key = section.name) {
                     val summary = when (section) {
                         SettingsSection.TEAMS -> countSummary(R.plurals.settings_teams_summary, prefs.favoriteTeamIds.size)
@@ -134,6 +136,7 @@ private fun SettingsList(
                             // Only count sources that still exist, in case one was removed.
                             state.newsSources?.count { it.id in prefs.newsSourceIds } ?: prefs.newsSourceIds.size,
                         )
+                        SettingsSection.ABOUT -> ""
                     }
                     ListItem(
                         headlineContent = { Text(stringResource(section.title)) },
@@ -158,11 +161,20 @@ private fun SettingsList(
                     trailingContent = { Switch(checked = true, onCheckedChange = null, enabled = false) },
                 )
             }
-            item {
+            item(key = SettingsSection.ABOUT.name) {
+                val about = SettingsSection.ABOUT
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_version)) },
-                    supportingContent = { Text(BuildConfig.VERSION_NAME) },
-                    leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                    headlineContent = { Text(stringResource(about.title)) },
+                    supportingContent = {
+                        Text(stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME))
+                    },
+                    leadingContent = { Icon(about.icon, contentDescription = null) },
+                    colors = if (about == selected) {
+                        ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    } else {
+                        ListItemDefaults.colors()
+                    },
+                    modifier = Modifier.clickable { onSectionClick(about) },
                 )
             }
         }
