@@ -84,7 +84,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
-    private object Keys {
+    internal object Keys {
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val FAVORITE_TEAMS = stringSetPreferencesKey("favorite_team_ids")
         val NOTIFICATION_TYPES = stringSetPreferencesKey("notification_types")

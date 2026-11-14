@@ -5,6 +5,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.rbware.zamboni.BuildConfig
 import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.news.PlaceholderNewsSourceRepository
+import io.rbware.zamboni.data.preferences.LegacyTeamIdMigration
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.remote.HockeyNerdApi
 import io.rbware.zamboni.data.scores.HockeyNerdScoresRepository
@@ -18,7 +19,10 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
 import java.util.concurrent.TimeUnit
 
-private val Context.userPreferencesDataStore by preferencesDataStore(name = "user_preferences")
+private val Context.userPreferencesDataStore by preferencesDataStore(
+    name = "user_preferences",
+    produceMigrations = { listOf(LegacyTeamIdMigration) },
+)
 
 /**
  * Manual dependency container, created once in [io.rbware.zamboni.ZamboniApplication].
