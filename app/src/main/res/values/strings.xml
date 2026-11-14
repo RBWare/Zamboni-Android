@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">Zamboni</string>
+
+    <string name="nav_scores">Scores</string>
+    <string name="nav_news">News</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="scores_item_title">Item %1$d</string>
+    <string name="scores_item_subtitle">Tap to view details</string>
+    <string name="detail_empty">Select an item to see its details</string>
+    <string name="detail_body">This is the detail pane for item %1$d. On phones it opens as its own screen; on tablets and unfolded foldables it appears side-by-side with the list.</string>
+    <string name="news_placeholder">News is coming soon</string>
+    <string name="settings_favorite_teams">Favorite teams</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_news_sources">News sources</string>
+    <string name="settings_select_section">Select a setting to change it</string>
+    <string name="settings_none_selected">None selected</string>
+    <plurals name="settings_teams_summary">
+        <item quantity="one">%d team</item>
+        <item quantity="other">%d teams</item>
+    </plurals>
+    <plurals name="settings_notifications_summary">
+        <item quantity="one">%d type enabled</item>
+        <item quantity="other">%d types enabled</item>
+    </plurals>
+    <plurals name="settings_news_summary">
+        <item quantity="one">%d source</item>
+        <item quantity="other">%d sources</item>
+    </plurals>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_summary">Use colors from your wallpaper (Android 12+)</string>
+    <string name="settings_version">Version</string>
+    <string name="back">Back</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to Zamboni</string>
+    <string name="onboarding_welcome_body">Scores, news, and alerts for the teams you care about. Let\'s get you set up.</string>
+    <string name="onboarding_teams_title">Pick your favorite teams</string>
+    <string name="onboarding_teams_body">Choose at least one. You can change this later in Settings.</string>
+    <string name="onboarding_notifications_title">Stay in the loop</string>
+    <string name="onboarding_notifications_body">Choose which updates you\'d like to get for your teams.</string>
+    <string name="onboarding_news_title">Choose your news</string>
+    <string name="onboarding_news_body">Select the sources to show in the News tab.</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_finish">Finish</string>
+
+    <!-- Notification types -->
+    <string name="notification_game_start">Game start</string>
+    <string name="notification_game_start_desc">When a game involving your teams begins</string>
+    <string name="notification_goals">Goals</string>
+    <string name="notification_goals_desc">Every goal scored in your teams\' games</string>
+    <string name="notification_final_score">Final score</string>
+    <string name="notification_final_score_desc">The result when a game ends</string>
+    <string name="notification_breaking_news">Breaking news</string>
+    <string name="notification_breaking_news_desc">Major stories from your news sources</string>
+</resources>

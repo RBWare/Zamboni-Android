@@ -1,0 +1,65 @@
+package io.rbware.zamboni.data.preferences
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import io.rbware.zamboni.data.model.NotificationType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+
+/** Persists onboarding state and the user's choices (teams, notifications, news sources). */
+class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
+
+    val userPreferences: Flow<UserPreferences> = dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            UserPreferences(
+                onboardingComplete = prefs[Keys.ONBOARDING_COMPLETE] ?: false,
+                favoriteTeamIds = prefs[Keys.FAVORITE_TEAMS].orEmpty(),
+                notificationTypes = prefs[Keys.NOTIFICATION_TYPES].orEmpty()
+                    .mapNotNull { name -> NotificationType.entries.firstOrNull { it.name == name } }
+                    .toSet(),
+                newsSourceIds = prefs[Keys.NEWS_SOURCES].orEmpty(),
+            )
+        }
+
+    /** Saves all onboarding choices and marks onboarding as done, atomically. */
+    suspend fun completeOnboarding(
+        favoriteTeamIds: Set<String>,
+        notificationTypes: Set<NotificationType>,
+        newsSourceIds: Set<String>,
+    ) {
+        dataStore.edit { prefs ->
+            prefs[Keys.FAVORITE_TEAMS] = favoriteTeamIds
+            prefs[Keys.NOTIFICATION_TYPES] = notificationTypes.mapTo(mutableSetOf()) { it.name }
+            prefs[Keys.NEWS_SOURCES] = newsSourceIds
+            prefs[Keys.ONBOARDING_COMPLETE] = true
+        }
+    }
+
+    suspend fun toggleFavoriteTeam(teamId: String) = toggle(Keys.FAVORITE_TEAMS, teamId)
+
+    suspend fun toggleNotificationType(type: NotificationType) = toggle(Keys.NOTIFICATION_TYPES, type.name)
+
+    suspend fun toggleNewsSource(sourceId: String) = toggle(Keys.NEWS_SOURCES, sourceId)
+
+    private suspend fun toggle(key: Preferences.Key<Set<String>>, value: String) {
+        dataStore.edit { prefs: MutablePreferences ->
+            val current = prefs[key].orEmpty()
+            prefs[key] = if (value in current) current - value else current + value
+        }
+    }
+
+    private object Keys {
+        val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val FAVORITE_TEAMS = stringSetPreferencesKey("favorite_team_ids")
+        val NOTIFICATION_TYPES = stringSetPreferencesKey("notification_types")
+        val NEWS_SOURCES = stringSetPreferencesKey("news_source_ids")
+    }
+}
