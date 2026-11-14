@@ -1,5 +1,13 @@
 package io.rbware.zamboni.ui.scores
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +49,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,10 +57,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
-import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -61,15 +66,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -78,8 +82,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rbware.zamboni.R
 import io.rbware.zamboni.data.model.League
+import io.rbware.zamboni.ui.components.MessageState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -87,8 +91,9 @@ import java.time.ZoneOffset
 /**
  * Scores tab: pick a date, filter by league and favorites, and open a game.
  *
- * Uses a list/detail layout: on phones a game opens full-screen; on tablets and unfolded
- * foldables the game appears beside the list.
+ * On phones a game opens full-screen. On tablets and unfolded foldables the list fills the
+ * screen until a game is opened, then the game's details slide in beside it; the X button or
+ * back closes them again.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -97,8 +102,10 @@ fun ScoresScreen(
     viewModel: ScoresViewModel = viewModel(factory = ScoresViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigator = rememberListDetailPaneScaffoldNavigator<String>()
-    val scope = rememberCoroutineScope()
+    var selectedGameId by rememberSaveable { mutableStateOf<String?>(null) }
+    val sideBySide = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo()).maxHorizontalPartitions > 1
+
+    BackHandler(enabled = selectedGameId != null) { selectedGameId = null }
 
     // Live updates: re-fetch on the API's suggested interval, only while the screen is visible.
     // Restarts after each response, since the API returns a fresh interval every time.
@@ -114,46 +121,62 @@ fun ScoresScreen(
         }
     }
 
-    NavigableListDetailPaneScaffold(
-        navigator = navigator,
-        modifier = modifier,
-        listPane = {
-            AnimatedPane {
-                ScoresListPane(
-                    state = state,
-                    selectedGameId = navigator.currentDestination?.contentKey,
-                    actions = ScoresActions(
-                        onGameClick = { id ->
-                            scope.launch { navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id) }
-                        },
-                        onPreviousDay = viewModel::previousDay,
-                        onNextDay = viewModel::nextDay,
-                        onToday = viewModel::goToToday,
-                        onDateSelected = viewModel::selectDate,
-                        onRefresh = viewModel::refresh,
-                        onRefreshErrorShown = viewModel::refreshErrorShown,
-                        onToggleLeague = { viewModel.toggleLeague(it) },
-                        onShowAllLeagues = { viewModel.showAllLeagues() },
-                        onFavoritesOnlyChange = { viewModel.setFavoritesOnly(it) },
-                        onFavoritesFirstChange = { viewModel.setFavoritesFirst(it) },
-                        onClearFilters = { viewModel.clearFilters() },
-                    ),
-                )
-            }
-        },
-        detailPane = {
-            AnimatedPane {
-                val gameId = navigator.currentDestination?.contentKey
-                GameDetail(
-                    gameId = gameId,
-                    listGame = state.games?.firstOrNull { it.id == gameId },
-                    today = state.today,
-                    showBack = navigator.canNavigateBack(),
-                    onBack = { scope.launch { navigator.navigateBack() } },
-                )
-            }
-        },
+    val actions = ScoresActions(
+        onGameClick = { id -> selectedGameId = id },
+        onPreviousDay = viewModel::previousDay,
+        onNextDay = viewModel::nextDay,
+        onToday = viewModel::goToToday,
+        onDateSelected = viewModel::selectDate,
+        onRefresh = viewModel::refresh,
+        onRefreshErrorShown = viewModel::refreshErrorShown,
+        onToggleLeague = { viewModel.toggleLeague(it) },
+        onShowAllLeagues = { viewModel.showAllLeagues() },
+        onFavoritesOnlyChange = { viewModel.setFavoritesOnly(it) },
+        onFavoritesFirstChange = { viewModel.setFavoritesFirst(it) },
+        onClearFilters = { viewModel.clearFilters() },
     )
+    // Keeps the list's scroll position while a phone shows a game in its place.
+    val stateHolder = rememberSaveableStateHolder()
+    val list: @Composable () -> Unit = {
+        stateHolder.SaveableStateProvider("list") {
+            ScoresListPane(state = state, selectedGameId = selectedGameId, actions = actions)
+        }
+    }
+    val detail: @Composable (String) -> Unit = { gameId ->
+        GameDetail(
+            gameId = gameId,
+            listGame = state.games?.firstOrNull { it.id == gameId },
+            today = state.today,
+            closeStyle = if (sideBySide) DetailCloseStyle.CLOSE else DetailCloseStyle.BACK,
+            onClose = { selectedGameId = null },
+        )
+    }
+
+    if (sideBySide) {
+        // Remember the last game so it stays on screen while the pane slides away.
+        var shownGameId by remember { mutableStateOf(selectedGameId) }
+        selectedGameId?.let { shownGameId = it }
+        Row(modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) { list() }
+            AnimatedVisibility(
+                visible = selectedGameId != null,
+                modifier = Modifier.weight(1f),
+                enter = slideInHorizontally { it } + fadeIn(),
+                exit = slideOutHorizontally { it } + fadeOut(),
+            ) {
+                shownGameId?.let { detail(it) }
+            }
+        }
+    } else {
+        AnimatedContent(
+            targetState = selectedGameId,
+            modifier = modifier.fillMaxSize(),
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "scores-detail",
+        ) { gameId ->
+            if (gameId == null) list() else detail(gameId)
+        }
+    }
 }
 
 private class ScoresActions(
@@ -425,23 +448,6 @@ private fun SectionHeader(section: GameSection) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-/** Centered message with an optional action. Scrollable so pull-to-refresh still works. */
-@Composable
-private fun MessageState(message: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Spacer(Modifier.height(96.dp))
-        Text(message, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
-        if (actionLabel != null && onAction != null) {
-            Spacer(Modifier.height(16.dp))
-            OutlinedButton(onClick = onAction) { Text(actionLabel) }
-        }
     }
 }
 

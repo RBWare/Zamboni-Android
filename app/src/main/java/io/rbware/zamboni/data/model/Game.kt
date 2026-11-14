@@ -35,13 +35,14 @@ sealed interface GameStatus {
     data object Scheduled : GameStatus
 
     /**
-     * @param period 1-3 for regulation, 4 for OT, 5+ for additional OT periods.
+     * @param period 1-3 for regulation, 4 for OT, 5+ for additional OT periods. Null if the
+     *   source only says the game is in progress.
      * @param clock time remaining in the period (e.g. "12:34"), or null if unknown.
      * @param intermission true during the break after [period].
      * @param shootout true once the game has gone to a shootout.
      */
     data class Live(
-        val period: Int,
+        val period: Int?,
         val clock: String?,
         val intermission: Boolean = false,
         val shootout: Boolean = false,

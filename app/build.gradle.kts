@@ -1,8 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+/** Values from local.properties (not committed), e.g. API keys. */
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
 }
 
 android {
@@ -19,6 +26,10 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // NAHL scores are disabled when this is empty.
+        val gamesheetApiKey = localProperties.getProperty("gamesheet.apiKey").orEmpty()
+        buildConfigField("String", "GAMESHEET_API_KEY", "\"$gamesheetApiKey\"")
     }
 
     buildTypes {
@@ -65,6 +76,8 @@ dependencies {
     implementation(libs.squareup.retrofit.converter.kotlinx.serialization)
     implementation(libs.squareup.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.jsoup)
+    implementation(libs.androidx.browser)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.svg)

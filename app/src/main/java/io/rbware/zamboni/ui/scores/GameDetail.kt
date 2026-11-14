@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -84,14 +85,17 @@ private val HeaderLogoSize = 64.dp
  * [listGame] (from the schedule) is shown immediately while full details load, and supplies
  * the team records, which the game endpoint doesn't include.
  */
+/** How the details pane is dismissed: a back arrow when it fills the screen, an X when it sits beside the list. */
+enum class DetailCloseStyle { BACK, CLOSE }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameDetail(
     gameId: String?,
     listGame: Game?,
     today: LocalDate,
-    showBack: Boolean,
-    onBack: () -> Unit,
+    closeStyle: DetailCloseStyle,
+    onClose: () -> Unit,
     viewModel: GameDetailViewModel = viewModel(factory = GameDetailViewModel.Factory),
 ) {
     LaunchedEffect(gameId) { viewModel.show(gameId) }
@@ -127,9 +131,16 @@ fun GameDetail(
                     game?.let { Text(stringResource(R.string.game_matchup, it.away.abbreviation, it.home.abbreviation)) }
                 },
                 navigationIcon = {
-                    if (showBack) {
-                        IconButton(onClick = onBack) {
+                    if (closeStyle == DetailCloseStyle.BACK && gameId != null) {
+                        IconButton(onClick = onClose) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        }
+                    }
+                },
+                actions = {
+                    if (closeStyle == DetailCloseStyle.CLOSE && gameId != null) {
+                        IconButton(onClick = onClose) {
+                            Icon(Icons.Filled.Close, stringResource(R.string.close))
                         }
                     }
                 },
@@ -321,17 +332,20 @@ private fun GoalRow(goal: Goal, game: Game) {
                 }
                 if (goal.emptyNet) GoalTag(stringResource(R.string.goal_tag_en))
             }
-            Text(
-                if (goal.assists.isEmpty()) {
-                    stringResource(R.string.goal_unassisted)
-                } else {
-                    goal.assists.joinToString(", ") { withTotal(it) }
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            // Null when the source doesn't report assists; say nothing rather than "Unassisted".
+            goal.assists?.let { assists ->
+                Text(
+                    if (assists.isEmpty()) {
+                        stringResource(R.string.goal_unassisted)
+                    } else {
+                        assists.joinToString(", ") { withTotal(it) }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         Spacer(Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.End) {

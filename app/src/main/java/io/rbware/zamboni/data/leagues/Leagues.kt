@@ -6,4 +6,5 @@ import io.rbware.zamboni.data.model.League
 object Leagues {
     val NHL = League(id = "nhl", shortName = "NHL", name = "National Hockey League")
     val AHL = League(id = "ahl", shortName = "AHL", name = "American Hockey League")
+    val NAHL = League(id = "nahl", shortName = "NAHL", name = "North American Hockey League")
 }

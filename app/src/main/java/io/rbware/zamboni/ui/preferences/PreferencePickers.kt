@@ -158,12 +158,17 @@ fun NewsSourcePicker(
             val checked = source.id in selectedIds
             ListItem(
                 headlineContent = { Text(source.name) },
+                supportingContent = sourceHost(source.feedUrl)?.let { host -> { Text(host) } },
                 leadingContent = { Checkbox(checked = checked, onCheckedChange = null) },
                 modifier = Modifier.toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle(source) }),
             )
         }
     }
 }
+
+/** "thehockeywriters.com" from a feed URL, to show where a source comes from. */
+private fun sourceHost(feedUrl: String): String? =
+    runCatching { java.net.URI(feedUrl).host?.removePrefix("www.") }.getOrNull()
 
 @Composable
 private fun LoadingBox(modifier: Modifier) {

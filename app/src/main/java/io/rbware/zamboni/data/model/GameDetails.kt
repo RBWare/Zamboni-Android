@@ -27,7 +27,8 @@ data class Goal(
     val strength: GoalStrength,
     val emptyNet: Boolean,
     val scorer: GoalPlayer,
-    val assists: List<GoalPlayer>,
+    /** Empty if unassisted; null if the source doesn't report assists. */
+    val assists: List<GoalPlayer>?,
 )
 
 enum class GoalStrength { EVEN, POWER_PLAY, SHORTHANDED }

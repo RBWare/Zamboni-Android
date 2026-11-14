@@ -55,11 +55,16 @@ fun gameStatusText(game: Game): String = when (val status = game.status) {
     GameStatus.Scheduled -> formatTime(game.startTime)
     GameStatus.Postponed -> stringResource(R.string.status_postponed)
     GameStatus.Cancelled -> stringResource(R.string.status_cancelled)
-    is GameStatus.Live -> when {
-        status.shootout -> stringResource(R.string.period_shootout)
-        status.intermission -> stringResource(R.string.status_intermission, periodLabel(status.period))
-        status.clock != null -> "${periodLabel(status.period)} ${status.clock}"
-        else -> periodLabel(status.period)
+    is GameStatus.Live -> {
+        val period = status.period
+        when {
+            status.shootout -> stringResource(R.string.period_shootout)
+            // Shown under the LIVE badge, so say something different.
+            period == null -> stringResource(R.string.status_in_progress)
+            status.intermission -> stringResource(R.string.status_intermission, periodLabel(period))
+            status.clock != null -> "${periodLabel(period)} ${status.clock}"
+            else -> periodLabel(period)
+        }
     }
     is GameStatus.Final -> when (status.decision) {
         Decision.REGULATION -> stringResource(R.string.status_final)

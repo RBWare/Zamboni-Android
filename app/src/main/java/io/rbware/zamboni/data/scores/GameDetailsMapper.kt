@@ -90,7 +90,7 @@ private fun parseTeamStats(stats: JsonObject): List<TeamStat> = TeamStatType.ent
     TeamStat(type, away, home)
 }
 
-private fun JsonElement.toStatValue(): StatValue? {
+internal fun JsonElement.toStatValue(): StatValue? {
     val primitive = this as? JsonPrimitive ?: return null
     return if (primitive.isString) {
         StatValue.Text(primitive.content)

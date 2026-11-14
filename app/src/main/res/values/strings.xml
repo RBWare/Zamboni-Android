@@ -33,6 +33,7 @@
 
     <!-- Game status -->
     <string name="status_live">LIVE</string>
+    <string name="status_in_progress">In progress</string>
     <string name="status_final">Final</string>
     <string name="status_final_ot">Final/OT</string>
     <string name="status_final_so">Final/SO</string>
@@ -75,7 +76,14 @@
     <string name="stat_giveaways">Giveaways</string>
     <string name="stat_takeaways">Takeaways</string>
 
-    <string name="news_placeholder">News is coming soon</string>
+    <!-- News -->
+    <string name="news_meta">%1$s \u00B7 %2$s</string>
+    <string name="news_all_sources">All sources</string>
+    <string name="news_no_sources">No news sources selected</string>
+    <string name="news_choose_sources">Choose sources</string>
+    <string name="news_no_articles">No articles right now</string>
+    <string name="news_load_failed">Couldn\'t load news</string>
+    <string name="news_sources_failed">Couldn\'t load: %1$s</string>
     <string name="settings_favorite_teams">Favorite teams</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_news_sources">News sources</string>
@@ -97,6 +105,7 @@
     <string name="settings_dynamic_color_summary">Use colors from your wallpaper (Android 12+)</string>
     <string name="settings_version">Version</string>
     <string name="back">Back</string>
+    <string name="close">Close</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to Zamboni</string>

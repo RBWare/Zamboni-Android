@@ -2,6 +2,7 @@ package io.rbware.zamboni.data.placeholder
 
 import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.logos.NhlLogos
+import io.rbware.zamboni.data.logos.NhlTeamColors
 import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.Team
 
@@ -97,6 +98,7 @@ object PlaceholderHockeyData {
                 league = league,
                 // Only NHL logos are available so far; other leagues show the abbreviation.
                 logo = if (league == NHL) NhlLogos.forTeam(abbr) else null,
+                colors = if (league == NHL) NhlTeamColors.forTeam(abbr) else null,
             )
         }
 }

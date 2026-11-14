@@ -48,7 +48,7 @@ class GameDetailsMapperTest {
         assertEquals(GoalStrength.EVEN, first.strength)
         assertEquals("Ryan O'Reilly", first.scorer.name)
         assertEquals(8, first.scorer.seasonTotal)
-        assertEquals(listOf("S. Stamkos", "M. Bourque"), first.assists.map { it.name })
+        assertEquals(listOf("S. Stamkos", "M. Bourque"), first.assists!!.map { it.name })
         assertEquals(1 to 0, first.awayScore to first.homeScore)
 
         val stats = details.teamStats.associateBy { it.type }

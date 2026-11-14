@@ -2,6 +2,7 @@ package io.rbware.zamboni.data.scores
 
 import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.logos.NhlLogos
+import io.rbware.zamboni.data.logos.NhlTeamColors
 import io.rbware.zamboni.data.model.Decision
 import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameStatus
@@ -24,7 +25,7 @@ fun nhlTeamId(abbrev: String): String = "${Leagues.NHL.id}-${abbrev.lowercase()}
 /** App-wide game ID for an NHL game, e.g. "nhl-2026020311". */
 fun nhlGameId(apiGameId: Long): String = "$NHL_GAME_ID_PREFIX$apiGameId"
 
-/** The hockeynerd.com game ID behind an app game ID, or null if it isn't an NHL game ID. */
+/** The NHL game ID (also used by hockeynerd.com) behind an app game ID, or null if it isn't an NHL game ID. */
 fun apiGameIdOrNull(gameId: String): Long? =
     gameId.takeIf { it.startsWith(NHL_GAME_ID_PREFIX) }?.removePrefix(NHL_GAME_ID_PREFIX)?.toLongOrNull()
 
@@ -75,7 +76,7 @@ internal fun resolveNhlTeam(
         abbreviation = abbrev,
         league = Leagues.NHL,
         logo = NhlLogos.forTeam(abbrev),
-        colors = colors,
+        colors = colors ?: NhlTeamColors.forTeam(abbrev),
     )
 }
 

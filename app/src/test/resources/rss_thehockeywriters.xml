@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>The Hockey Writers</title>
+	<atom:link href="https://thehockeywriters.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://thehockeywriters.com/</link>
+	<description>NHL News, Schedules, Lineups, Insight, Analysis</description>
+	<lastBuildDate>Sat, 14 Nov 2026 19:38:35 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=7.1.4</generator>
+
+<image>
+	<url>https://thehockeywriters.com/wp-content/uploads/2021/04/cropped-New_Logo_THW-32x32.png</url>
+	<title>The Hockey Writers</title>
+	<link>https://thehockeywriters.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>Highs and Lows of the Washington Capitals&#8217; Season So Far</title>
+		<link>https://thehockeywriters.com/highs-and-lows-of-the-washington-capitals-season-so-far/</link>
+					<comments>https://thehockeywriters.com/highs-and-lows-of-the-washington-capitals-season-so-far/#respond</comments>
+		
+		<dc:creator><![CDATA[Hayley Paljug]]></dc:creator>
+		<pubDate>Sat, 14 Nov 2026 19:45:00 +0000</pubDate>
+				<category><![CDATA[Washington Capitals]]></category>
+		<category><![CDATA[Alex Ovechkin]]></category>
+		<category><![CDATA[Cole Hutson]]></category>
+		<category><![CDATA[Logan Thompson]]></category>
+		<category><![CDATA[Tom Wilson]]></category>
+		<guid isPermaLink="false">https://thehockeywriters.com/?p=1715413</guid>
+
+					<description><![CDATA[The Washington Capitals have had an up-and-down season so far. They sit in third place for a wildcard playoff spot and fourth in the Metropolitan Division, with a 10-7-0 record.&#8230;]]></description>
+		
+					<wfw:commentRss>https://thehockeywriters.com/highs-and-lows-of-the-washington-capitals-season-so-far/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+<item>
+		<title>Oilers&#8217; All-Time Top 3 European Goalies</title>
+		<link>https://thehockeywriters.com/oilers-all-time-top-3-european-goalies/</link>
+					<comments>https://thehockeywriters.com/oilers-all-time-top-3-european-goalies/#respond</comments>
+		
+		<dc:creator><![CDATA[Brian Swane]]></dc:creator>
+		<pubDate>Sat, 14 Nov 2026 19:04:17 +0000</pubDate>
+				<category><![CDATA[Archives]]></category>
+		<category><![CDATA[Edmonton Oilers]]></category>
+		<category><![CDATA[Hockey History]]></category>
+		<category><![CDATA[Oilers History]]></category>
+		<category><![CDATA[Jussi Markkanen]]></category>
+		<category><![CDATA[Mikko Koskinen]]></category>
+		<category><![CDATA[Tommy Salo]]></category>
+		<guid isPermaLink="false">https://thehockeywriters.com/?p=1694455</guid>
+
+					<description><![CDATA[We recently looked at the Edmonton Oilers’ All-Time Top 5 European Forwards and All-Time Top 8 European Defencemen. Now we’re examining the team’s greatest European goaltenders. Unlike other positions on the&#8230;]]></description>
+		
+					<wfw:commentRss>https://thehockeywriters.com/oilers-all-time-top-3-european-goalies/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+<item>
+		<title>They Wore It Once: Boston Bruins Players and Their Unique Numbers</title>
+		<link>https://thehockeywriters.com/boston-bruins-single-use-jersey-numbers/</link>
+		
+		<dc:creator><![CDATA[Zander Manning]]></dc:creator>
+		<pubDate>Sat, 14 Nov 2026 18:59:08 +0000</pubDate>
+				<category><![CDATA[Archives]]></category>
+		<category><![CDATA[Boston Bruins]]></category>
+		<category><![CDATA[Bruins History]]></category>
+		<category><![CDATA[Hockey History]]></category>
+		<category><![CDATA[David Pastrňák]]></category>
+		<category><![CDATA[Eddie Shore]]></category>
+		<category><![CDATA[Lionel Hitchman]]></category>
+		<category><![CDATA[Ray Bourque]]></category>
+		<guid isPermaLink="false">https://thehockeywriters.com/?p=1414985</guid>
+
+					<description><![CDATA[Probably the most memorable sweater number retirement ceremony in Boston Bruins history occurred on Dec. 3, 1987, when Raymond Bourque surprised the legendary Phil Esposito and delighted the fans at&#8230;]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>
+
+<!-- plugin=object-cache-pro client=relay metric#hits=1744 metric#misses=9 metric#hit-ratio=99.5 metric#bytes=3383525 metric#prefetches=0 metric#store-reads=90 metric#store-writes=22 metric#store-hits=215 metric#store-misses=0 metric#sql-queries=6 metric#ms-total=320.42 metric#ms-cache=14.39 metric#ms-cache-avg=0.1296 metric#ms-cache-ratio=4.5 -->

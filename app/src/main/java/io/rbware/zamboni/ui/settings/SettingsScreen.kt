@@ -129,7 +129,11 @@ private fun SettingsList(
                     val summary = when (section) {
                         SettingsSection.TEAMS -> countSummary(R.plurals.settings_teams_summary, prefs.favoriteTeamIds.size)
                         SettingsSection.NOTIFICATIONS -> countSummary(R.plurals.settings_notifications_summary, prefs.notificationTypes.size)
-                        SettingsSection.NEWS_SOURCES -> countSummary(R.plurals.settings_news_summary, prefs.newsSourceIds.size)
+                        SettingsSection.NEWS_SOURCES -> countSummary(
+                            R.plurals.settings_news_summary,
+                            // Only count sources that still exist, in case one was removed.
+                            state.newsSources?.count { it.id in prefs.newsSourceIds } ?: prefs.newsSourceIds.size,
+                        )
                     }
                     ListItem(
                         headlineContent = { Text(stringResource(section.title)) },
