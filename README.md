@@ -51,7 +51,7 @@ app/src/main/java/io/rbware/zamboni/
     |-- preferences/             # pickers shared by onboarding and Settings
     |-- scores/                  # Scores tab: date, filters, game list and game detail
     |-- news/                    # News tab: articles from the chosen RSS sources
-    |-- settings/                # Settings tab: onboarding choices and About
+    |-- settings/                # Settings tab: onboarding choices, Gamesheet key and About
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
 Also: `docs/screenshots/` (README images) and `tools/generate_launcher_icon.py` (draws the
@@ -74,13 +74,20 @@ be opened through the other. Season records come from the NHL standings, and tea
 (which the NHL API doesn't provide) are a fixed table in `NhlTeamColors`.
 
 NAHL scores and teams come from the Gamesheet stats gateway (`gateway.gamesheet.io`), which
-needs a partner API key. Put it in `local.properties` (not committed):
+needs a partner API key. No key ships with the app: users enter their own under
+Settings > NAHL data (Gamesheet). The key is checked against Gamesheet before it is saved and
+is stored on the device only. Without a key the NAHL is left out (no games, teams or filter).
+
+For development, debug builds can have a key built in from `local.properties` (not committed):
 
 ```
 gamesheet.apiKey=YOUR_KEY
 ```
 
-Without it the NAHL is left out. Notes on the Gamesheet data:
+Release builds never include it, even when `local.properties` has one. A key entered in
+Settings takes priority over the built-in one.
+
+Notes on the Gamesheet data:
 - Games, scores, goal scorers and team stats come from `stats/unifiedschedule` (the data
   behind the nahl.com game center), one request per season for a day, or per game for details.
 - Seasons are looked up through one club's `myclub` page (Lone Star Brahmas, `4-605`).

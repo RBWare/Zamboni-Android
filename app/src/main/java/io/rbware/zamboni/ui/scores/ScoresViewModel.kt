@@ -16,12 +16,18 @@ import io.rbware.zamboni.data.preferences.ScoresFilter
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -79,7 +85,13 @@ class ScoresViewModel(
     private val gamesLoad = MutableStateFlow(GamesLoad())
     private var loadJob: Job? = null
 
-    private val leagues = flow { emit(scoresRepository.getLeagues()) }
+    /** Changes when the Gamesheet key is set or cleared, which adds or removes the NAHL. */
+    private val gamesheetKeyChanges = userPreferencesRepository.userPreferences
+        .map { it.gamesheetApiKey }
+        .distinctUntilChanged()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val leagues = gamesheetKeyChanges.mapLatest { scoresRepository.getLeagues() }
 
     val uiState: StateFlow<ScoresUiState> = combine(
         selectedDate,
@@ -108,6 +120,8 @@ class ScoresViewModel(
 
     init {
         load(clearExisting = true)
+        // Reload when the key changes, so NAHL games appear or disappear without a restart.
+        gamesheetKeyChanges.drop(1).onEach { load(clearExisting = false) }.launchIn(viewModelScope)
     }
 
     fun selectDate(date: LocalDate) {

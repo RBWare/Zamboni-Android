@@ -8,6 +8,8 @@ data class UserPreferences(
     val notificationTypes: Set<NotificationType> = emptySet(),
     val newsSourceIds: Set<String> = emptySet(),
     val scoresFilter: ScoresFilter = ScoresFilter(),
+    /** Gamesheet partner key entered in Settings, or null to use the one built into the app (if any). */
+    val gamesheetApiKey: String? = null,
 )
 
 /** How the Scores list is filtered and ordered. Persisted so it sticks between launches. */

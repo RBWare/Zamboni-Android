@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import io.rbware.zamboni.data.model.NotificationType
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                     favoritesFirst = prefs[Keys.SCORES_FAVORITES_FIRST] ?: true,
                     favoritesOnly = prefs[Keys.SCORES_FAVORITES_ONLY] ?: false,
                 ),
+                gamesheetApiKey = prefs[Keys.GAMESHEET_API_KEY]?.takeIf { it.isNotBlank() },
             )
         }
 
@@ -77,6 +79,14 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
+    /** Saves the user's Gamesheet key; null or blank removes it (falling back to the built-in key). */
+    suspend fun setGamesheetApiKey(key: String?) {
+        dataStore.edit { prefs ->
+            val trimmed = key?.trim()
+            if (trimmed.isNullOrEmpty()) prefs.remove(Keys.GAMESHEET_API_KEY) else prefs[Keys.GAMESHEET_API_KEY] = trimmed
+        }
+    }
+
     private suspend fun toggle(key: Preferences.Key<Set<String>>, value: String) {
         dataStore.edit { prefs: MutablePreferences ->
             val current = prefs[key].orEmpty()
@@ -92,5 +102,6 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val SCORES_LEAGUES = stringSetPreferencesKey("scores_league_ids")
         val SCORES_FAVORITES_FIRST = booleanPreferencesKey("scores_favorites_first")
         val SCORES_FAVORITES_ONLY = booleanPreferencesKey("scores_favorites_only")
+        val GAMESHEET_API_KEY = stringPreferencesKey("gamesheet_api_key")
     }
 }

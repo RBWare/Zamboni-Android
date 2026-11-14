@@ -12,6 +12,7 @@ import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -52,6 +53,7 @@ enum class SettingsSection(@param:StringRes val title: Int, val icon: ImageVecto
     TEAMS(R.string.settings_favorite_teams, Icons.Outlined.Star),
     NOTIFICATIONS(R.string.settings_notifications, Icons.Outlined.Notifications),
     NEWS_SOURCES(R.string.settings_news_sources, Icons.Outlined.Newspaper),
+    GAMESHEET(R.string.settings_gamesheet, Icons.Outlined.Key),
     ABOUT(R.string.settings_about, Icons.Outlined.Info),
 }
 
@@ -103,6 +105,11 @@ fun SettingsScreen(
                             })
                         SettingsSection.NEWS_SOURCES ->
                             NewsSourcePicker(state.newsSources, state.preferences.newsSourceIds, viewModel::toggleNewsSource)
+                        SettingsSection.GAMESHEET -> GamesheetKeySection(
+                            state = state.gamesheet,
+                            onSave = viewModel::saveGamesheetKey,
+                            onClear = viewModel::clearGamesheetKey,
+                        )
                         SettingsSection.ABOUT -> AboutSection()
                         null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(stringResource(R.string.settings_select_section), style = MaterialTheme.typography.bodyLarge)
@@ -140,6 +147,7 @@ private fun SettingsList(
                             // Only count sources that still exist, in case one was removed.
                             state.newsSources?.count { it.id in prefs.newsSourceIds } ?: prefs.newsSourceIds.size,
                         )
+                        SettingsSection.GAMESHEET -> gamesheetKeySummary(state.gamesheet)
                         SettingsSection.ABOUT -> ""
                     }
                     ListItem(

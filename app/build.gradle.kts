@@ -27,17 +27,19 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // NAHL scores are disabled when this is empty.
-        val gamesheetApiKey = localProperties.getProperty("gamesheet.apiKey").orEmpty()
-        buildConfigField("String", "GAMESHEET_API_KEY", "\"$gamesheetApiKey\"")
     }
 
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            // Developer builds get the Gamesheet key from local.properties, so NAHL scores work
+            // without entering it in Settings.
+            buildConfigField("String", "GAMESHEET_API_KEY", "\"${localProperties.getProperty("gamesheet.apiKey").orEmpty()}\"")
         }
         release {
+            // Distributed builds never carry a Gamesheet key; users enter their own in Settings.
+            buildConfigField("String", "GAMESHEET_API_KEY", "\"\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

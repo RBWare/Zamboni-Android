@@ -14,6 +14,7 @@ import io.rbware.zamboni.data.remote.GamesheetApi
 import io.rbware.zamboni.data.remote.HockeyNerdApi
 import io.rbware.zamboni.data.remote.NhlApi
 import io.rbware.zamboni.data.scores.FallbackScoresRepository
+import io.rbware.zamboni.data.scores.GamesheetKeyProvider
 import io.rbware.zamboni.data.scores.GamesheetNahlRepository
 import io.rbware.zamboni.data.scores.HockeyNerdScoresRepository
 import io.rbware.zamboni.data.scores.MultiLeagueScoresRepository
@@ -69,31 +70,27 @@ class AppContainer(context: Context) {
         .build()
         .create()
 
-    /** NAHL data needs the Gamesheet key from local.properties; without it the NAHL is left out. */
-    private val nahlRepository: GamesheetNahlRepository? = BuildConfig.GAMESHEET_API_KEY
-        .takeIf { it.isNotBlank() }
-        ?.let { apiKey ->
-            val client = okHttpClient.newBuilder()
-                .addInterceptor { chain ->
-                    chain.proceed(
-                        chain.request().newBuilder().header(GamesheetApi.API_KEY_HEADER, apiKey).build(),
-                    )
-                }
-                .build()
-            val api: GamesheetApi = Retrofit.Builder()
-                .baseUrl(GamesheetApi.BASE_URL)
-                .client(client)
-                .addConverterFactory(GamesheetApi.json.asConverterFactory("application/json".toMediaType()))
-                .build()
-                .create()
-            GamesheetNahlRepository(api)
-        }
+    /**
+     * The Gamesheet key for NAHL data: the one entered in Settings, else the one built into
+     * debug builds from local.properties. Release builds have none built in.
+     */
+    val gamesheetKeyProvider = GamesheetKeyProvider(userPreferencesRepository, BuildConfig.GAMESHEET_API_KEY)
+
+    val nahlRepository = GamesheetNahlRepository(
+        api = Retrofit.Builder()
+            .baseUrl(GamesheetApi.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GamesheetApi.json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(),
+        apiKey = gamesheetKeyProvider::current,
+    )
 
     /** Static NHL teams (and AHL, when enabled in PlaceholderHockeyData). The NHL scores sources use it to fill in full team names. */
     private val placeholderTeamRepository = PlaceholderTeamRepository()
 
     // TODO: replace the NHL and AHL placeholder list with an API once specified.
-    val teamRepository: TeamRepository = CombinedTeamRepository(listOfNotNull(placeholderTeamRepository, nahlRepository))
+    val teamRepository: TeamRepository = CombinedTeamRepository(listOf(placeholderTeamRepository, nahlRepository))
 
     /**
      * NHL from the NHL API (hockeynerd.com as a fallback if it fails), plus the NAHL from
@@ -108,7 +105,8 @@ class AppContainer(context: Context) {
                 ),
                 ownsGameId = { apiGameIdOrNull(it) != null },
             ),
-            nahlRepository?.let { MultiLeagueScoresRepository.Source(it, ::isNahlGameId) },
+            // Shows nothing (and no NAHL filter chip) while there is no Gamesheet key.
+            MultiLeagueScoresRepository.Source(nahlRepository, ::isNahlGameId),
         ),
         onLeagueFailed = { Log.w("Scores", "A league failed to load: $it") },
     )
