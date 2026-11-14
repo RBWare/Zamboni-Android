@@ -3,8 +3,47 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M42,30h24a12,12 0,0 1,12 12v24a12,12 0,0 1,-12 12h-24a12,12 0,0 1,-12 -12v-24a12,12 0,0 1,12 -12zM30,52.5h48v3h-48zM54,49a5,5 0,1 0,0 10a5,5 0,1 0,0 -10z" />
+    <!-- Themed-icon silhouette of the ice resurfacer. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.88"
+        android:scaleY="0.88">
+        <group
+            android:translateX="3"
+            android:translateY="-0.29999999999999716">
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M18,63h6a2,2 0,0 1,2,2v1.5a2,2 0,0 1,-2,2h-6a2,2 0,0 1,-2,-2v-1.5a2,2 0,0 1,2,-2z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M40,38H74a12,12 0,0 1,12,12V64a4,4 0,0 1,-4,4H40Z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M24,54a4,4 0,0 1,4,-4H42V68H28a4,4 0,0 1,-4,-4Z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M27.7,37h0.0a1.7,1.7 0,0 1,1.7,1.7v10.6a1.7,1.7 0,0 1,-1.7,1.7h-0.0a1.7,1.7 0,0 1,-1.7,-1.7v-10.6a1.7,1.7 0,0 1,1.7,-1.7z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M25.5,36h5.0a1.5,1.5 0,0 1,1.5,1.5v0.0a1.5,1.5 0,0 1,-1.5,1.5h-5.0a1.5,1.5 0,0 1,-1.5,-1.5v-0.0a1.5,1.5 0,0 1,1.5,-1.5z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M40.2,40h0.0a1.7,1.7 0,0 1,1.7,1.7v7.6a1.7,1.7 0,0 1,-1.7,1.7h-0.0a1.7,1.7 0,0 1,-1.7,-1.7v-7.6a1.7,1.7 0,0 1,1.7,-1.7z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M33.0,44.5h3.0a2.5,2.5 0,0 1,2.5,2.5v1.0a2.5,2.5 0,0 1,-2.5,2.5h-3.0a2.5,2.5 0,0 1,-2.5,-2.5v-1.0a2.5,2.5 0,0 1,2.5,-2.5z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M30.9,41a3.6,3.6 0,1 1,7.2,0a3.6,3.6 0,1 1,-7.2,0z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+                android:pathData="M31.4,68a4.6,4.6 0,1 1,9.2,0a4.6,4.6 0,1 1,-9.2,0zM34.2,68a1.8,1.8 0,1 1,3.6,0a1.8,1.8 0,1 1,-3.6,0z" />
+            <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+                android:pathData="M69.4,68a4.6,4.6 0,1 1,9.2,0a4.6,4.6 0,1 1,-9.2,0zM72.2,68a1.8,1.8 0,1 1,3.6,0a1.8,1.8 0,1 1,-3.6,0z" />
+        </group>
+    </group>
 </vector>
