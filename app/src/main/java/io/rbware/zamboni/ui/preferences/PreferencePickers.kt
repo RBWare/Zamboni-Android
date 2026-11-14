@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
@@ -26,7 +26,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,19 +33,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.rbware.zamboni.data.model.NewsSource
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.Team
+import io.rbware.zamboni.ui.components.TeamBadge
 
 /*
  * Selection UIs shared by onboarding and Settings so both always look and behave the same.
  * Each one scrolls by itself, so place it in a container with bounded height.
  */
 
-/** Favorite-team grid. Columns adapt to the window width (2 on phones, more on tablets). */
+/** Favorite-team grid grouped by league. Columns adapt to the window width (2 on phones, more on tablets). */
 @Composable
 fun TeamPicker(
     teams: List<Team>?,
@@ -66,8 +65,19 @@ fun TeamPicker(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(teams, key = { it.id }) { team ->
-            TeamCard(team = team, selected = team.id in selectedIds, onClick = { onToggle(team) })
+        // Group by league with a full-width header per league, in the order the teams arrive.
+        teams.groupBy { it.league }.forEach { (league, leagueTeams) ->
+            item(key = "header-${league.id}", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+                Text(
+                    text = league.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                )
+            }
+            items(leagueTeams, key = { it.id }, contentType = { "team" }) { team ->
+                TeamCard(team = team, selected = team.id in selectedIds, onClick = { onToggle(team) })
+            }
         }
     }
 }
@@ -88,16 +98,7 @@ private fun TeamCard(team: Team, selected: Boolean, onClick: () -> Unit) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(team.abbreviation, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                }
-            }
+            TeamBadge(team = team, highlighted = selected)
             Spacer(Modifier.width(12.dp))
             Text(
                 text = team.name,

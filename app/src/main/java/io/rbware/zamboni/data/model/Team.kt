@@ -8,4 +8,7 @@ data class Team(
     val id: String,
     val name: String,
     val abbreviation: String,
+    val league: League,
+    /** Null when no logo is available; the abbreviation is shown instead. */
+    val logo: TeamLogo? = null,
 )

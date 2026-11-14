@@ -5,6 +5,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.news.PlaceholderNewsSourceRepository
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
+import io.rbware.zamboni.data.scores.PlaceholderScoresRepository
+import io.rbware.zamboni.data.scores.ScoresRepository
 import io.rbware.zamboni.data.teams.PlaceholderTeamRepository
 import io.rbware.zamboni.data.teams.TeamRepository
 
@@ -19,6 +21,9 @@ class AppContainer(context: Context) {
 
     // TODO: replace with a hockeynerd.com-backed implementation once the API is specified.
     val teamRepository: TeamRepository = PlaceholderTeamRepository()
+
+    // TODO: replace with a hockeynerd.com-backed implementation once the API is specified.
+    val scoresRepository: ScoresRepository = PlaceholderScoresRepository()
 
     // TODO: replace with the real list of RSS feeds once specified.
     val newsSourceRepository: NewsSourceRepository = PlaceholderNewsSourceRepository()

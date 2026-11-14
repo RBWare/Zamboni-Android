@@ -26,6 +26,11 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                     .mapNotNull { name -> NotificationType.entries.firstOrNull { it.name == name } }
                     .toSet(),
                 newsSourceIds = prefs[Keys.NEWS_SOURCES].orEmpty(),
+                scoresFilter = ScoresFilter(
+                    leagueIds = prefs[Keys.SCORES_LEAGUES].orEmpty(),
+                    favoritesFirst = prefs[Keys.SCORES_FAVORITES_FIRST] ?: true,
+                    favoritesOnly = prefs[Keys.SCORES_FAVORITES_ONLY] ?: false,
+                ),
             )
         }
 
@@ -49,6 +54,29 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun toggleNewsSource(sourceId: String) = toggle(Keys.NEWS_SOURCES, sourceId)
 
+    suspend fun toggleScoresLeague(leagueId: String) = toggle(Keys.SCORES_LEAGUES, leagueId)
+
+    /** An empty league filter means all leagues are shown. */
+    suspend fun clearScoresLeagues() {
+        dataStore.edit { it.remove(Keys.SCORES_LEAGUES) }
+    }
+
+    suspend fun setScoresFavoritesFirst(enabled: Boolean) {
+        dataStore.edit { it[Keys.SCORES_FAVORITES_FIRST] = enabled }
+    }
+
+    suspend fun setScoresFavoritesOnly(enabled: Boolean) {
+        dataStore.edit { it[Keys.SCORES_FAVORITES_ONLY] = enabled }
+    }
+
+    /** Shows every league and turns off "favorites only". */
+    suspend fun clearScoresFilters() {
+        dataStore.edit {
+            it.remove(Keys.SCORES_LEAGUES)
+            it[Keys.SCORES_FAVORITES_ONLY] = false
+        }
+    }
+
     private suspend fun toggle(key: Preferences.Key<Set<String>>, value: String) {
         dataStore.edit { prefs: MutablePreferences ->
             val current = prefs[key].orEmpty()
@@ -61,5 +89,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val FAVORITE_TEAMS = stringSetPreferencesKey("favorite_team_ids")
         val NOTIFICATION_TYPES = stringSetPreferencesKey("notification_types")
         val NEWS_SOURCES = stringSetPreferencesKey("news_source_ids")
+        val SCORES_LEAGUES = stringSetPreferencesKey("scores_league_ids")
+        val SCORES_FAVORITES_FIRST = booleanPreferencesKey("scores_favorites_first")
+        val SCORES_FAVORITES_ONLY = booleanPreferencesKey("scores_favorites_only")
     }
 }
