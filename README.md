@@ -1,11 +1,34 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
+Version 1.0.0. Scores for the NHL and NAHL, hockey news from several feeds, and favorite teams.
+
+## Screenshots
+
+### Phone
+
+| Scores | Game details | News | About |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/phone_scores.png" width="200" alt="Scores list"> | <img src="docs/screenshots/phone_game.png" width="200" alt="Game details"> | <img src="docs/screenshots/phone_news.png" width="200" alt="News feed"> | <img src="docs/screenshots/phone_about.png" width="200" alt="About screen"> |
+
+### Foldable (unfolded)
+
+On a wide screen the scores fill the screen in two columns; opening a game slides its details
+in beside the list (closed with the X or back). Settings show the section being edited beside
+the list.
+
+| Scores | Game details |
+| :---: | :---: |
+| <img src="docs/screenshots/foldable_scores.png" width="400" alt="Scores in two columns"> | <img src="docs/screenshots/foldable_game.png" width="400" alt="Scores with game details beside them"> |
+
+| News | Settings |
+| :---: | :---: |
+| <img src="docs/screenshots/foldable_news.png" width="400" alt="News in two columns"> | <img src="docs/screenshots/foldable_settings.png" width="400" alt="Settings with favorite teams beside them"> |
 
 ## Stack
 - Kotlin 2.3, AGP 8.13, Gradle 8.13, JDK 17 target
 - Jetpack Compose (BOM 2026.06.01), Material 3 with dynamic color
-- `material3-adaptive` (list/detail pane scaffold) and `material3-adaptive-navigation-suite`
+- `material3-adaptive` (list/detail pane scaffold for Settings) and `material3-adaptive-navigation-suite`
 - minSdk 26, targetSdk / compileSdk 36
 
 ## Layout
@@ -28,9 +51,11 @@ app/src/main/java/io/rbware/zamboni/
     |-- preferences/             # pickers shared by onboarding and Settings
     |-- scores/                  # Scores tab: date, filters, game list and game detail
     |-- news/                    # News tab: articles from the chosen RSS sources
-    |-- settings/                # Settings tab: list/detail editor for the onboarding choices
+    |-- settings/                # Settings tab: onboarding choices and About
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
+Also: `docs/screenshots/` (README images) and `tools/generate_launcher_icon.py` (draws the
+launcher icon vectors).
 
 ## Adding a news source
 Add one line to `data/news/NewsSources.kt`:
@@ -70,7 +95,8 @@ Without it the NAHL is left out. Notes on the Gamesheet data:
 
 ## Still to do
 - Teams: replace the placeholder team list with data from an API.
-- AHL scores: needs a data source.
+- AHL: turned off (`PlaceholderHockeyData.AHL_ENABLED`) until there is a scores source. The AHL
+  news feed is unaffected.
 - Notifications: preferences are stored, but nothing is delivered yet.
 
 ## Build

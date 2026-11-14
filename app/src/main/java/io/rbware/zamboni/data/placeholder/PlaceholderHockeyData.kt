@@ -15,9 +15,17 @@ object PlaceholderHockeyData {
     private val NHL = Leagues.NHL
     private val AHL = Leagues.AHL
 
-    val leagues: List<League> = listOf(NHL, AHL)
+    /**
+     * The AHL is turned off until it has a scores source: its teams are kept here but not offered
+     * as favorites. Saved AHL favorites are left alone and come back if this is switched on.
+     */
+    const val AHL_ENABLED = false
 
-    val teams: List<Team> by lazy {
+    val leagues: List<League> = if (AHL_ENABLED) listOf(NHL, AHL) else listOf(NHL)
+
+    val teams: List<Team> by lazy { nhlTeams + if (AHL_ENABLED) ahlTeams else emptyList() }
+
+    private val nhlTeams: List<Team> by lazy {
         teamsFor(
             NHL,
             "ANA" to "Anaheim Ducks",
@@ -52,7 +60,11 @@ object PlaceholderHockeyData {
             "VGK" to "Vegas Golden Knights",
             "WSH" to "Washington Capitals",
             "WPG" to "Winnipeg Jets",
-        ) + teamsFor(
+        )
+    }
+
+    private val ahlTeams: List<Team> by lazy {
+        teamsFor(
             AHL,
             "ABB" to "Abbotsford Canucks",
             "BAK" to "Bakersfield Condors",

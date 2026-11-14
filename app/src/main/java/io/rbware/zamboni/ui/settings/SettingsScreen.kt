@@ -129,7 +129,11 @@ private fun SettingsList(
             SettingsSection.entries.filter { it != SettingsSection.ABOUT }.forEach { section ->
                 item(key = section.name) {
                     val summary = when (section) {
-                        SettingsSection.TEAMS -> countSummary(R.plurals.settings_teams_summary, prefs.favoriteTeamIds.size)
+                        SettingsSection.TEAMS -> countSummary(
+                            R.plurals.settings_teams_summary,
+                            // Only count teams that can be picked (e.g. not AHL teams while it is off).
+                            state.teams?.count { it.id in prefs.favoriteTeamIds } ?: prefs.favoriteTeamIds.size,
+                        )
                         SettingsSection.NOTIFICATIONS -> countSummary(R.plurals.settings_notifications_summary, prefs.notificationTypes.size)
                         SettingsSection.NEWS_SOURCES -> countSummary(
                             R.plurals.settings_news_summary,

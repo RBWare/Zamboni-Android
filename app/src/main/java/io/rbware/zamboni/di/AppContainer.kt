@@ -89,7 +89,7 @@ class AppContainer(context: Context) {
             GamesheetNahlRepository(api)
         }
 
-    /** Static NHL and AHL teams. The NHL scores sources use it to fill in full team names. */
+    /** Static NHL teams (and AHL, when enabled in PlaceholderHockeyData). The NHL scores sources use it to fill in full team names. */
     private val placeholderTeamRepository = PlaceholderTeamRepository()
 
     // TODO: replace the NHL and AHL placeholder list with an API once specified.
