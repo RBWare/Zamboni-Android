@@ -9,6 +9,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +21,10 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** What the radio is doing, for the stream with [mediaId] (see [radioMediaId]). */
 @Immutable
@@ -49,10 +54,11 @@ private fun gameIdOfRadioMediaId(mediaId: String): String? =
     mediaId.split('|').takeIf { it.size == 3 && it[0] == "radio" }?.get(1)
 
 /** Controls the radio service from the UI. Connects while the calling composable is shown. */
-class RadioPlayer internal constructor() {
+class RadioPlayer internal constructor(private val context: Context, private val scope: CoroutineScope) {
     var state by mutableStateOf(RadioState())
         private set
     private var controller: MediaController? = null
+    private var starting: Job? = null
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = update(player)
@@ -103,31 +109,40 @@ class RadioPlayer internal constructor() {
 
     /**
      * Plays [url] (an HLS stream). [id] identifies it for [state]; [title] and [subtitle] show in
-     * the media notification, with [artworkUrl] as its picture.
+     * the media notification. [artworkUrl] is the picture the app shows; the notification gets
+     * one drawn from [artwork], since the system can't load SVG logos.
      */
-    fun play(id: String, url: String, title: String, subtitle: String, artworkUrl: String?) {
-        val controller = controller ?: return
+    fun play(id: String, url: String, title: String, subtitle: String, artworkUrl: String?, artwork: RadioArtwork?) {
+        if (controller == null) return
         state = state.copy(failedId = null)
-        val item = MediaItem.Builder()
-            .setMediaId(id)
-            .setUri(url)
-            .setMimeType(MimeTypes.APPLICATION_M3U8)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(title)
-                    .setArtist(subtitle)
-                    .setArtworkUri(artworkUrl?.let(Uri::parse))
-                    .setIsPlayable(true)
-                    .build(),
-            )
-            .setLiveConfiguration(MediaItem.LiveConfiguration.Builder().build())
-            .build()
-        controller.setMediaItem(item)
-        controller.prepare()
-        controller.play()
+        starting?.cancel()
+        starting = scope.launch {
+            // Usually instant (the logo is already loaded for the screen); never hold up the
+            // stream for long.
+            val picture = artwork?.let { withTimeoutOrNull(ARTWORK_TIMEOUT_MS) { renderRadioArtwork(context, it) } }
+            val controller = controller ?: return@launch
+            val metadata = MediaMetadata.Builder()
+                .setTitle(title)
+                .setArtist(subtitle)
+                .setArtworkUri(artworkUrl?.let(Uri::parse))
+                .setIsPlayable(true)
+            // Used ahead of the URI by the system's player.
+            picture?.let { metadata.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+            val item = MediaItem.Builder()
+                .setMediaId(id)
+                .setUri(url)
+                .setMimeType(MimeTypes.APPLICATION_M3U8)
+                .setMediaMetadata(metadata.build())
+                .setLiveConfiguration(MediaItem.LiveConfiguration.Builder().build())
+                .build()
+            controller.setMediaItem(item)
+            controller.prepare()
+            controller.play()
+        }
     }
 
     fun stop() {
+        starting?.cancel()
         controller?.run {
             stop()
             clearMediaItems()
@@ -142,7 +157,8 @@ val LocalRadioPlayer = staticCompositionLocalOf<RadioPlayer> { error("No RadioPl
 @Composable
 fun rememberRadioPlayer(): RadioPlayer {
     val context = LocalContext.current.applicationContext
-    val player = remember { RadioPlayer() }
+    val scope = rememberCoroutineScope()
+    val player = remember { RadioPlayer(context, scope) }
     DisposableEffect(context) {
         val future = MediaController.Builder(context, sessionToken(context)).buildAsync()
         future.addListener(
@@ -159,6 +175,8 @@ fun rememberRadioPlayer(): RadioPlayer {
     }
     return player
 }
+
+private const val ARTWORK_TIMEOUT_MS = 1_000L
 
 private fun sessionToken(context: Context) =
     SessionToken(context, ComponentName(context, RadioPlaybackService::class.java))
