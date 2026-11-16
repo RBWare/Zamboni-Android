@@ -100,7 +100,11 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
                                 notes = leagueNotes(nahlNeedsKey = state.nahlNeedsKey),
                             )
                         }
-                        OnboardingStep.TEAMS -> StepScaffold(R.string.onboarding_teams_title, R.string.onboarding_teams_body) {
+                        OnboardingStep.TEAMS -> StepScaffold(
+                            R.string.onboarding_teams_title,
+                            // "Choose at least one" only applies when there are teams to choose.
+                            body = R.string.onboarding_teams_body.takeUnless { state.visibleTeams?.isEmpty() == true },
+                        ) {
                             if (state.visibleTeams?.isEmpty() == true) {
                                 Text(
                                     stringResource(R.string.onboarding_teams_none),
@@ -166,16 +170,18 @@ private fun WelcomeStep() {
 }
 
 @Composable
-private fun StepScaffold(title: Int, body: Int, content: @Composable () -> Unit) {
+private fun StepScaffold(title: Int, body: Int?, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(stringResource(title), style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.size(4.dp))
-            Text(
-                stringResource(body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (body != null) {
+                Spacer(Modifier.size(4.dp))
+                Text(
+                    stringResource(body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Box(Modifier.weight(1f)) { content() }
     }
