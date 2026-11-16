@@ -1,7 +1,7 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 1.0.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
+Version 2.0.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
 Mastodon accounts and YouTube channels, game and news alerts, and favorite teams.
 
 ## Screenshots
@@ -51,15 +51,18 @@ app/src/main/java/io/rbware/zamboni/
 |   |-- remote/                  # NHL, hockeynerd.com and Gamesheet APIs (Retrofit) and response models
 |   |-- scores/                  # schedule + game details repositories and mappers
 |   |-- news/                    # RSS sources, parser and repository
+|   |-- social/                  # built-in accounts, Mastodon/ActivityPub and YouTube clients, feed
 |   |-- logos/                   # NHL logo URLs and offline prefetch
 |   |-- preferences/             # DataStore-backed user choices + migrations
 |   `-- teams/                   # team list for favorites (placeholder data)
+|-- notifications/               # background checks for game events and news alerts
 `-- ui/
     |-- ZamboniApp.kt            # NavigationSuiteScaffold: bottom bar, rail or drawer by window size
-    |-- onboarding/              # first-run flow: welcome, teams, notifications, news
+    |-- onboarding/              # first-run flow: welcome, teams, notifications, news, social
     |-- preferences/             # pickers shared by onboarding and Settings
     |-- scores/                  # Scores tab: date, filters, game list and game detail
     |-- news/                    # News tab: articles from the chosen RSS sources
+    |-- social/                  # Social tab: posts and videos from the chosen accounts
     |-- settings/                # Settings tab: onboarding choices, Gamesheet key and About
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
@@ -113,7 +116,6 @@ Notes on the Gamesheet data:
 - Teams: replace the placeholder team list with data from an API.
 - AHL: turned off (`PlaceholderHockeyData.AHL_ENABLED`) until there is a scores source. The AHL
   news feed is unaffected.
-- Notifications: preferences are stored, but nothing is delivered yet.
 
 ## Build
 ```sh
