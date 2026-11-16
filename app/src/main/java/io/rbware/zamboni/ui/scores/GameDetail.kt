@@ -16,25 +16,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.NotificationsOff
+import androidx.compose.material.icons.outlined.Tv
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,9 +54,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,17 +71,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import io.rbware.zamboni.R
+import io.rbware.zamboni.data.model.Broadcast
+import io.rbware.zamboni.data.model.BroadcastMarket
 import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameDetails
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.GoalStrength
+import io.rbware.zamboni.data.model.RadioStream
 import io.rbware.zamboni.data.model.StatValue
 import io.rbware.zamboni.data.model.Team
 import io.rbware.zamboni.data.model.TeamSide
 import io.rbware.zamboni.data.model.TeamStat
 import io.rbware.zamboni.data.model.TeamStatType
+import io.rbware.zamboni.data.scores.BroadcastNames
+import io.rbware.zamboni.radio.LocalRadioPlayer
+import io.rbware.zamboni.radio.RadioPlayer
+import io.rbware.zamboni.radio.radioMediaId
+import io.rbware.zamboni.ui.LocalShownGame
 import io.rbware.zamboni.ui.components.TeamBadge
 import kotlinx.coroutines.delay
 import java.text.NumberFormat
@@ -101,6 +121,12 @@ fun GameDetail(
     viewModel: GameDetailViewModel = viewModel(factory = GameDetailViewModel.Factory),
 ) {
     LaunchedEffect(gameId) { viewModel.show(gameId) }
+    // Lets the now-playing bar hide while this game's own radio controls are on screen.
+    val shownGame = LocalShownGame.current
+    DisposableEffect(gameId) {
+        shownGame.gameId = gameId
+        onDispose { if (shownGame.gameId == gameId) shownGame.gameId = null }
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // Ignore state that still belongs to the previously shown game.
     val current = state.takeIf { it.gameId == gameId }
@@ -171,6 +197,13 @@ fun GameDetail(
                         LinearProgressIndicator(Modifier.fillMaxWidth().padding(bottom = 16.dp))
                     }
                     ScoreHeader(game)
+                    val mute by viewModel.muteState.collectAsStateWithLifecycle()
+                    if (mute.canMute(game)) {
+                        MuteGameRow(
+                            muted = game.id in mute.mutedGameIds,
+                            onMutedChange = { viewModel.setMuted(game.id, it) },
+                        )
+                    }
                     current?.error?.let { error ->
                         LoadError(error, onRetry = viewModel::refresh)
                     }
@@ -181,6 +214,7 @@ fun GameDetail(
                         if (details.teamStats.isNotEmpty()) {
                             TeamStatsSection(details.teamStats, game)
                         }
+                        WhereToWatchSection(details, game)
                     }
                     GameInfoSection(game, today)
                 }
@@ -518,6 +552,158 @@ private fun formatStat(type: TeamStatType, value: StatValue): String {
             NumberFormat.getIntegerInstance(locale).format(value.value)
         }
     }
+}
+
+// endregion
+
+// region Mute
+
+/** "I'm watching this one": turns off alerts and the Live Update for just this game. */
+@Composable
+private fun MuteGameRow(muted: Boolean, onMutedChange: (Boolean) -> Unit) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = if (muted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .clip(MaterialTheme.shapes.large)
+            .toggleable(value = muted, role = Role.Switch, onValueChange = onMutedChange),
+    ) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.game_mute)) },
+            supportingContent = { Text(stringResource(if (muted) R.string.game_mute_on else R.string.game_mute_off)) },
+            leadingContent = {
+                Icon(if (muted) Icons.Outlined.NotificationsOff else Icons.Outlined.NotificationsActive, contentDescription = null)
+            },
+            trailingContent = { Switch(checked = muted, onCheckedChange = null) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+// endregion
+
+// region Where to watch
+
+/**
+ * TV and streaming broadcasts grouped as national (per country) and each team's local ones,
+ * then each team's radio stream with a play button. Radio is offered until the game is over.
+ */
+@Composable
+private fun WhereToWatchSection(details: GameDetails, game: Game) {
+    val radio = details.radio.takeIf { game.status is GameStatus.Scheduled || game.status is GameStatus.Live }.orEmpty()
+    if (details.broadcasts.isEmpty() && radio.isEmpty()) return
+    SectionTitle(stringResource(R.string.game_section_watch))
+    HorizontalDivider()
+    val groups = details.broadcasts.groupBy { it.market to (if (it.market == BroadcastMarket.NATIONAL) it.countryCode else null) }
+    val order = compareBy<Pair<BroadcastMarket, String?>>({ it.first.ordinal }, { it.second != "US" })
+    groups.keys.sortedWith(order).forEach { key ->
+        val (market, country) = key
+        BroadcastGroup(
+            title = when (market) {
+                BroadcastMarket.NATIONAL -> when (country) {
+                    "US" -> stringResource(R.string.watch_national_us)
+                    "CA" -> stringResource(R.string.watch_national_ca)
+                    else -> stringResource(R.string.watch_national)
+                }
+                BroadcastMarket.HOME -> stringResource(R.string.watch_local, game.home.name)
+                BroadcastMarket.AWAY -> stringResource(R.string.watch_local, game.away.name)
+            },
+            broadcasts = groups.getValue(key),
+        )
+    }
+    if (radio.isNotEmpty()) {
+        val player = LocalRadioPlayer.current
+        Text(
+            stringResource(R.string.watch_radio),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
+        )
+        radio.forEach { stream ->
+            val team = if (stream.side == TeamSide.HOME) game.home else game.away
+            RadioRow(stream, team, game, player)
+        }
+    }
+}
+
+@Composable
+private fun BroadcastGroup(title: String, broadcasts: List<Broadcast>) {
+    Text(
+        title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
+    broadcasts.forEach { broadcast ->
+        ListItem(
+            headlineContent = { Text(BroadcastNames.displayName(broadcast.network)) },
+            leadingContent = { BroadcastLogo(broadcast) },
+        )
+    }
+}
+
+/** The network's logo, or a TV icon when it has none (many don't). */
+@Composable
+private fun BroadcastLogo(broadcast: Broadcast) {
+    val darkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val url = broadcast.logo?.forTheme(darkTheme)
+    var failed by remember(url) { mutableStateOf(false) }
+    Box(Modifier.size(width = 56.dp, height = 32.dp), contentAlignment = Alignment.Center) {
+        if (url == null || failed) {
+            Icon(Icons.Outlined.Tv, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                onState = { failed = it is AsyncImagePainter.State.Error },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun RadioRow(stream: RadioStream, team: Team, game: Game, player: RadioPlayer) {
+    val state = player.state
+    val mediaId = radioMediaId(game.id, stream.side.name)
+    val isThis = state.mediaId == mediaId
+    val playing = isThis && state.isPlaying
+    val paused = isThis && state.isPaused
+    val title = stringResource(R.string.watch_radio_title, team.name)
+    val subtitle = stringResource(R.string.game_matchup, game.away.abbreviation, game.home.abbreviation)
+    val darkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = {
+            when {
+                state.failedId == mediaId -> Text(stringResource(R.string.watch_radio_failed), color = MaterialTheme.colorScheme.error)
+                playing && state.isBuffering -> Text(stringResource(R.string.watch_radio_connecting))
+                playing -> Text(stringResource(R.string.watch_radio_playing))
+                paused -> Text(stringResource(R.string.radio_paused))
+                else -> {}
+            }
+        },
+        leadingContent = { TeamBadge(team, size = 32.dp) },
+        trailingContent = {
+            FilledTonalIconButton(
+                onClick = {
+                    when {
+                        playing -> player.stop()
+                        paused -> player.resume()
+                        else -> player.play(mediaId, stream.url, title, subtitle, team.logo?.forTheme(darkTheme = false))
+                    }
+                },
+            ) {
+                Icon(
+                    if (playing) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                    contentDescription = stringResource(if (playing) R.string.watch_radio_stop else R.string.watch_radio_listen, team.name),
+                )
+            }
+        },
+    )
 }
 
 // endregion

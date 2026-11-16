@@ -34,12 +34,21 @@ class MainActivity : ComponentActivity() {
                         false -> OnboardingScreen()
                         true -> {
                             val openGameId by viewModel.openGameRequest.collectAsStateWithLifecycle()
-                            ZamboniApp(openGameId = openGameId, onOpenGameHandled = viewModel::openGameHandled)
+                            ZamboniApp(
+                                openGameId = openGameId,
+                                onOpenGameHandled = viewModel::openGameHandled,
+                                onOpenGame = viewModel::openGame,
+                            )
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        (application as ZamboniApplication).onAppVisible()
     }
 
     override fun onNewIntent(intent: Intent) {

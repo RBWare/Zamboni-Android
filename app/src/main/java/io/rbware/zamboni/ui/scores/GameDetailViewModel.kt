@@ -7,15 +7,22 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.rbware.zamboni.ZamboniApplication
+import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameDetails
 import io.rbware.zamboni.data.model.GameStatus
+import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.scores.GameNotFoundException
 import io.rbware.zamboni.data.scores.ScoresRepository
+import io.rbware.zamboni.notifications.NotificationChecker
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
@@ -49,7 +56,40 @@ data class GameDetailUiState(
 }
 
 /** Loads details for whichever game the detail pane is showing. */
-class GameDetailViewModel(private val scoresRepository: ScoresRepository) : ViewModel() {
+/** What decides whether a game can be muted, and whether it is. */
+data class GameMuteState(
+    val favoriteTeamIds: Set<String> = emptySet(),
+    /** Muting only matters when some game alert or Live Updates are on. */
+    val gameAlertsOn: Boolean = false,
+    val mutedGameIds: Set<String> = emptySet(),
+) {
+    /** Games involving a favorite team can be muted until they're over. */
+    fun canMute(game: Game): Boolean =
+        gameAlertsOn && game.involvesAny(favoriteTeamIds) &&
+            (game.status is GameStatus.Scheduled || game.status is GameStatus.Live)
+}
+
+class GameDetailViewModel(
+    private val scoresRepository: ScoresRepository,
+    userPreferencesRepository: UserPreferencesRepository,
+    private val notificationChecker: NotificationChecker,
+) : ViewModel() {
+
+    val muteState: StateFlow<GameMuteState> = combine(
+        userPreferencesRepository.userPreferences,
+        notificationChecker.mutedGameIds,
+    ) { prefs, muted ->
+        GameMuteState(
+            favoriteTeamIds = prefs.favoriteTeamIds,
+            gameAlertsOn = prefs.notificationTypes.any { it != NotificationType.BREAKING_NEWS },
+            mutedGameIds = muted,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameMuteState())
+
+    fun setMuted(gameId: String, muted: Boolean) {
+        viewModelScope.launch { notificationChecker.setGameMuted(gameId, muted) }
+    }
+
 
     private val _uiState = MutableStateFlow(GameDetailUiState())
     val uiState: StateFlow<GameDetailUiState> = _uiState.asStateFlow()
@@ -109,7 +149,7 @@ class GameDetailViewModel(private val scoresRepository: ScoresRepository) : View
         val Factory = viewModelFactory {
             initializer {
                 val container = (this[APPLICATION_KEY] as ZamboniApplication).container
-                GameDetailViewModel(container.scoresRepository)
+                GameDetailViewModel(container.scoresRepository, container.userPreferencesRepository, container.notificationChecker)
             }
         }
     }

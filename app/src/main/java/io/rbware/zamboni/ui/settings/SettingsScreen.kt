@@ -392,7 +392,7 @@ private fun SectionDetail(
 }
 
 /** Some devices strip out individual system settings screens; don't crash if one is missing. */
-private fun Context.startSafely(intent: Intent) {
+internal fun Context.startSafely(intent: Intent) {
     try {
         startActivity(intent)
     } catch (e: ActivityNotFoundException) {

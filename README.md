@@ -1,8 +1,28 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 2.0.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
-Mastodon accounts and YouTube channels, game and news alerts, and favorite teams.
+Version 2.2.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
+Mastodon accounts and YouTube channels, game and news alerts, Live Updates and team radio for
+your favorite teams.
+
+## Features
+- **Scores**: NHL and NAHL games by day, with favorites first and league filters. Live game
+  clocks count down every second between updates.
+- **Game details**: scoring by period, team stats, and "Where to watch": national and local
+  TV and streaming broadcasts, and each team's radio broadcast to listen to in the app.
+- **Team radio**: keeps playing in the background with the usual media controls in the
+  notification and on the lock screen. A now-playing bar above the navigation pauses, resumes
+  or stops it from any tab, and opens the game when tapped.
+- **Alerts**: game start, goals, final score and breaking news for your favorite teams.
+- **Live Updates** (Android 16+): while a favorite team plays, the score shows as a chip in the
+  status bar and a pinned notification shows the score, period and clock, kept up to date
+  every few seconds.
+- **Mute this game**: in a favorite team's game details, for when you're watching anyway. No
+  alerts and no Live Update for that one game; other games aren't affected.
+- **News**: articles from the RSS feeds you choose.
+- **Social**: posts from Mastodon accounts (including mirrors of team and media accounts) and
+  videos from YouTube channels. Tap a team to turn on all of its accounts at once, in
+  Settings, onboarding or the empty Social tab.
 
 ## Screenshots
 
@@ -15,6 +35,18 @@ Mastodon accounts and YouTube channels, game and news alerts, and favorite teams
 | Social | Settings | About |
 | :---: | :---: | :---: |
 | <img src="docs/screenshots/phone_social.png" width="240" alt="Social feed of Mastodon posts and YouTube videos"> | <img src="docs/screenshots/phone_settings.png" width="240" alt="Settings"> | <img src="docs/screenshots/phone_about.png" width="240" alt="About screen"> |
+
+### Live games
+
+| Mute this game | Where to watch and radio | Now-playing bar |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/phone_game_live.png" width="240" alt="Live game details with the Mute this game switch"> | <img src="docs/screenshots/phone_where_to_watch.png" width="240" alt="Where to watch: TV broadcasts and team radio, one stream playing"> | <img src="docs/screenshots/phone_now_playing.png" width="240" alt="Scores list with the now-playing bar for team radio"> |
+
+<p align="center">
+  <img src="docs/screenshots/phone_live_update.png" width="360" alt="Live Update: score chip in the status bar, radio player and the Live Update notification"><br>
+  Live Update: the score chip in the status bar, the radio's media player and the Live Update
+  notification.
+</p>
 
 ### Foldable (unfolded)
 
@@ -34,10 +66,19 @@ section being edited beside the list.
 | :---: | :---: |
 | <img src="docs/screenshots/foldable_settings.png" width="400" alt="Settings with favorite teams beside them"> | <img src="docs/screenshots/foldable_settings_social.png" width="400" alt="Settings with social accounts beside them"> |
 
+| Live game: Mute this game | Where to watch and radio |
+| :---: | :---: |
+| <img src="docs/screenshots/foldable_game_live.png" width="400" alt="Live game details beside the scores, with the Mute this game switch"> | <img src="docs/screenshots/foldable_where_to_watch.png" width="400" alt="Where to watch beside the scores, with team radio playing"> |
+
+| Now-playing bar |
+| :---: |
+| <img src="docs/screenshots/foldable_now_playing.png" width="400" alt="Scores in two columns with the now-playing bar for team radio"> |
+
 ## Stack
 - Kotlin 2.3, AGP 8.13, Gradle 8.13, JDK 17 target
 - Jetpack Compose (BOM 2026.06.01), Material 3 with dynamic color
 - `material3-adaptive` (list/detail pane scaffold for Settings) and `material3-adaptive-navigation-suite`
+- Media3 (ExoPlayer with HLS, MediaSession) for team radio
 - minSdk 26, targetSdk / compileSdk 36
 
 ## Layout
@@ -55,9 +96,11 @@ app/src/main/java/io/rbware/zamboni/
 |   |-- logos/                   # NHL logo URLs and offline prefetch
 |   |-- preferences/             # DataStore-backed user choices + migrations
 |   `-- teams/                   # team list for favorites (placeholder data)
-|-- notifications/               # background checks for game events and news alerts
+|-- notifications/               # background checks for alerts, Live Updates service, game mutes
+|-- radio/                       # team radio: playback service and the UI's player controls
 `-- ui/
     |-- ZamboniApp.kt            # NavigationSuiteScaffold: bottom bar, rail or drawer by window size
+    |-- NowPlayingBar.kt         # radio controls shown above the navigation while it plays
     |-- onboarding/              # first-run flow: welcome, teams, notifications, news, social
     |-- preferences/             # pickers shared by onboarding and Settings
     |-- scores/                  # Scores tab: date, filters, game list and game detail
@@ -111,6 +154,24 @@ Notes on the Gamesheet data:
   score is only shown if one has been entered.
 - Team IDs are built from team names (e.g. `nahl-lone-star-brahmas`), since Gamesheet's
   numeric team IDs change every season. A renamed team would need a favorites migration.
+
+## Live games
+- **Freshness**: the NHL API sits behind a CDN that caches scores for about 20 seconds and a
+  game's details for about 10. The app reads the `Age` and `Cache-Control` headers to time each
+  refresh just after a fresh copy appears, and to know how old the clock it shows is.
+- **Ticking clock**: between updates the clock counts down on screen from that moment. It
+  stops 30 seconds after the last update, and corrects itself (e.g. after a whistle) on the
+  next one. The scores list takes newer data from an open game's details, so both agree.
+- **Live Updates**: a foreground service (`LiveGameService`, type `specialUse`) runs while a
+  favorite team's game is on and stops when none is. It refreshes the notification, and runs
+  the regular alert check every 20 seconds so goal alerts keep pace. Android only lets it start
+  while the app is on screen or from an exact alarm, so it starts when the app is opened, or at
+  puck drop if "Alarms & reminders" is allowed (Settings > Notifications links to it).
+  Otherwise the regular background checks show the Live Update and refresh it every couple of
+  minutes.
+- **Broadcasts and radio**: both come from the game's `landing` data (`tvBroadcasts` and each
+  team's `radioLink`, an HLS stream). Network codes are expanded in `BroadcastNames`; unknown
+  codes are shown as they are. Not every team has a radio stream for every game.
 
 ## Still to do
 - Teams: replace the placeholder team list with data from an API.

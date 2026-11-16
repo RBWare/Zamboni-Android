@@ -13,7 +13,10 @@ import io.rbware.zamboni.data.scores.ScoresRepository
 import io.rbware.zamboni.data.teams.TeamRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -35,6 +38,7 @@ class NotificationChecker(
     private val newsRepository: NewsRepository,
     private val stateStore: NotificationStateStore,
     private val notifier: Notifier,
+    private val liveUpdates: LiveUpdateHost = LiveUpdateHost.None,
     private val clock: () -> Instant = Instant::now,
     private val zone: () -> ZoneId = ZoneId::systemDefault,
 ) {
@@ -51,34 +55,84 @@ class NotificationChecker(
         val state = stateStore.load()
         val canPost = notifier.canPost()
 
-        val games = checkGames(prefs, state, now)
+        val muted = state.mutedGames.keys
+        val games = checkGames(prefs, state, muted, now)
         val news = checkNews(prefs, state, now)
 
         // Saving and posting must not be split by cancellation, or an event could be marked
         // as seen without ever being shown.
+        // Forget mutes for games that are long gone.
+        val keptMutes = state.mutedGames.filter { (id, at) ->
+            id in games.snapshots || Duration.between(Instant.ofEpochMilli(at), now) < SNAPSHOT_RETENTION
+        }
         withContext(NonCancellable) {
-            stateStore.save(state.copy(games = games.snapshots).let(news.applyTo))
+            stateStore.save(state.copy(games = games.snapshots, mutedGames = keptMutes).let(news.applyTo))
             if (canPost) {
                 games.alerts.forEach { notifier.postGameEvent(it.event, it.scorer) }
                 news.alerts.forEach(notifier::postArticle)
             }
         }
+        val liveOn = canPost && NotificationType.LIVE_UPDATES in prefs.notificationTypes
+        val wanted = if (liveOn) games.games.filter { wantsLiveUpdate(it, now) && it.id !in muted } else emptyList()
+        // The live service keeps these current; if Android won't start it from here, show them
+        // from this check (updated as often as the checks run) until it can.
+        if (wanted.isEmpty() || !liveUpdates.startService()) liveUpdates.showFromCheck(wanted, prefs.favoriteTeamIds)
+        liveUpdates.scheduleStart(
+            games.games
+                .filter { liveOn && it.phase == GamePhase.SCHEDULED && it.id !in muted && it.startTime > now }
+                .minOfOrNull { it.startTime }
+                ?.takeIf { Duration.between(now, it) <= LOOKAHEAD },
+        )
         if (canPost) games.nextPoll else null
+    }
+
+    /**
+     * Favorite teams' games today (and yesterday's in the early hours), with whether any day
+     * failed to load. For the live service.
+     */
+    suspend fun favoriteGames(): Pair<List<Game>, Boolean> {
+        val prefs = userPreferencesRepository.userPreferences.first()
+        if (prefs.favoriteTeamIds.isEmpty()) return emptyList<Game>() to false
+        return fetchFavoriteGames(prefs.favoriteTeamIds, clock())
+    }
+
+    /** Games the user muted. */
+    val mutedGameIds: Flow<Set<String>> = stateStore.states.map { it.mutedGames.keys }.distinctUntilChanged()
+
+    /**
+     * Mutes or unmutes [gameId]: no alerts and no Live Update for it while muted. Takes effect
+     * right away (the Live Update disappears or comes back).
+     */
+    suspend fun setGameMuted(gameId: String, muted: Boolean) {
+        mutex.withLock {
+            val state = stateStore.load()
+            val games = if (muted) state.mutedGames + (gameId to clock().toEpochMilli()) else state.mutedGames - gameId
+            withContext(NonCancellable) { stateStore.save(state.copy(mutedGames = games)) }
+        }
+        liveUpdates.refresh()
+        try {
+            check()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Check after muting failed: $e")
+        }
     }
 
     private class GameAlert(val event: GameEvent, val scorer: GoalPlayer?)
 
     private class GameResult(
+        val games: List<Game>,
         val snapshots: Map<String, GameSnapshot>,
         val alerts: List<GameAlert>,
         val nextPoll: Duration?,
     )
 
-    private suspend fun checkGames(prefs: UserPreferences, state: NotificationState, now: Instant): GameResult {
+    private suspend fun checkGames(prefs: UserPreferences, state: NotificationState, muted: Set<String>, now: Instant): GameResult {
         val enabled = prefs.notificationTypes.intersect(GAME_TYPES)
         if (enabled.isEmpty() || prefs.favoriteTeamIds.isEmpty()) {
             // Forget everything, so turning alerts back on starts fresh instead of replaying.
-            return GameResult(emptyMap(), emptyList(), null)
+            return GameResult(emptyList(), emptyMap(), emptyList(), null)
         }
 
         val (games, anyFailed) = fetchFavoriteGames(prefs.favoriteTeamIds, now)
@@ -90,6 +144,8 @@ class NotificationChecker(
         for (game in games) {
             val events = GameEventDetector.detect(snapshots[game.id], game, now)
             snapshots[game.id] = game.snapshot(now)
+            // Still tracked, so unmuting doesn't replay what happened meanwhile.
+            if (game.id in muted) continue
             for (event in events) {
                 val type = when (event) {
                     is GameEvent.Started -> NotificationType.GAME_START
@@ -105,7 +161,7 @@ class NotificationChecker(
         val nextPoll = nextGamePoll(games, now)
             // A failed fetch during a live game shouldn't wait for the periodic check.
             ?: RETRY_DELAY.takeIf { anyFailed && state.games.values.any { it.phase == GamePhase.LIVE } }
-        return GameResult(snapshots, alerts, nextPoll)
+        return GameResult(games, snapshots, alerts, nextPoll)
     }
 
     /**
@@ -218,7 +274,27 @@ class NotificationChecker(
     companion object {
         private const val TAG = "NotificationChecker"
 
-        private val GAME_TYPES = setOf(NotificationType.GAME_START, NotificationType.GOALS, NotificationType.FINAL_SCORE)
+        private val GAME_TYPES = setOf(
+            NotificationType.GAME_START,
+            NotificationType.GOALS,
+            NotificationType.FINAL_SCORE,
+            NotificationType.LIVE_UPDATES,
+        )
+
+        /** How early before puck drop a Live Update appears. */
+        val LIVE_UPDATE_LEAD: Duration = Duration.ofMinutes(5)
+
+        /** How long a game still listed as scheduled after its start time keeps its Live Update. */
+        val LIVE_UPDATE_LATE_START: Duration = Duration.ofMinutes(30)
+
+        /** Live, or about to start (or just past its start time without being marked live yet). */
+        fun wantsLiveUpdate(game: Game, now: Instant): Boolean = when (game.phase) {
+            GamePhase.LIVE -> true
+            GamePhase.SCHEDULED ->
+                Duration.between(now, game.startTime) <= LIVE_UPDATE_LEAD &&
+                    Duration.between(game.startTime, now) < LIVE_UPDATE_LATE_START
+            else -> false
+        }
 
         /** Poll interval while a favorite team is playing. */
         val LIVE_POLL: Duration = Duration.ofMinutes(2)

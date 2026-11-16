@@ -29,6 +29,7 @@ import io.rbware.zamboni.data.social.YouTubeClient
 import io.rbware.zamboni.data.teams.CombinedTeamRepository
 import io.rbware.zamboni.data.teams.PlaceholderTeamRepository
 import io.rbware.zamboni.data.teams.TeamRepository
+import io.rbware.zamboni.notifications.AndroidLiveUpdateHost
 import io.rbware.zamboni.notifications.NotificationChecker
 import io.rbware.zamboni.notifications.NotificationStateStore
 import io.rbware.zamboni.notifications.Notifier
@@ -148,5 +149,6 @@ class AppContainer(context: Context) {
         newsRepository = newsRepository,
         stateStore = NotificationStateStore(context.notificationStateDataStore),
         notifier = notifier,
+        liveUpdates = AndroidLiveUpdateHost(context),
     )
 }

@@ -1,5 +1,6 @@
 package io.rbware.zamboni
 
+import io.rbware.zamboni.data.model.BroadcastMarket
 import io.rbware.zamboni.data.model.Decision
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.GoalStrength
@@ -12,6 +13,7 @@ import io.rbware.zamboni.data.remote.NhlLandingResponse
 import io.rbware.zamboni.data.remote.NhlRightRailResponse
 import io.rbware.zamboni.data.remote.NhlScoreResponse
 import io.rbware.zamboni.data.remote.NhlStandingsResponse
+import io.rbware.zamboni.data.scores.BroadcastNames
 import io.rbware.zamboni.data.scores.NHL_IDLE_REFRESH
 import io.rbware.zamboni.data.scores.NHL_LIVE_GAME_REFRESH
 import io.rbware.zamboni.data.scores.NHL_LIVE_SCHEDULE_REFRESH
@@ -19,13 +21,13 @@ import io.rbware.zamboni.data.scores.isEmptyNet
 import io.rbware.zamboni.data.scores.toGameDetails
 import io.rbware.zamboni.data.scores.toRecords
 import io.rbware.zamboni.data.scores.toSchedule
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 /** Parses real api-web.nhle.com responses from src/test/resources. */
 class NhlMapperTest {
@@ -119,6 +121,31 @@ class NhlMapperTest {
         assertEquals(17, details.goals.first().assists!!.first().seasonTotal)
         assertTrue(details.teamStats.isEmpty())
         assertEquals(NHL_LIVE_GAME_REFRESH, details.suggestedRefresh)
+    }
+
+    @Test
+    fun landing_broadcastsAndRadio() {
+        val details = load<NhlLandingResponse>("nhl_landing_live.json").toGameDetails(null, knownTeams)
+        assertEquals(7, details.broadcasts.size)
+        val first = details.broadcasts.first()
+        assertEquals("NHLN", first.network)
+        assertEquals(BroadcastMarket.NATIONAL, first.market)
+        assertEquals("US", first.countryCode)
+        assertEquals("https://assets.nhle.com/logos/broadcast/324-dark.svg", first.logo?.dark)
+        assertEquals(listOf("HHN", "CARNHL"), details.broadcasts.filter { it.market == BroadcastMarket.HOME }.map { it.network })
+        assertEquals(
+            listOf(TeamSide.AWAY to "https://d2igy0yla8zi0u.cloudfront.net/sea/20262027/sea-radio.m3u8", TeamSide.HOME to "https://d2igy0yla8zi0u.cloudfront.net/car/20262027/car-radio.m3u8"),
+            details.radio.map { it.side to it.url },
+        )
+        assertEquals("NHL Network", BroadcastNames.displayName("NHLN"))
+        assertEquals("CARNHL", BroadcastNames.displayName("CARNHL"))
+    }
+
+    @Test
+    fun landing_future_trimsNetworkAndHasNoRadio() {
+        val details = load<NhlLandingResponse>("nhl_landing_future.json").toGameDetails(null, knownTeams)
+        assertEquals(listOf("SN", "TVAS", "ABTV"), details.broadcasts.map { it.network })
+        assertTrue(details.radio.isEmpty())
     }
 
     @Test

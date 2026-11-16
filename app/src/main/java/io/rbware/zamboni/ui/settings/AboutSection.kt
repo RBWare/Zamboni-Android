@@ -1,7 +1,11 @@
 package io.rbware.zamboni.ui.settings
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +18,9 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,20 +33,29 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import io.rbware.zamboni.BuildConfig
 import io.rbware.zamboni.R
 import io.rbware.zamboni.ui.components.GroupedListItem
 import io.rbware.zamboni.ui.components.groupedItems
 
-/** App name, icon, version, package and developer. */
+/** One About row; tapping it opens [url] when there is one. */
+private data class AboutRow(val label: String, val value: String, val url: String? = null)
+
+/** App name, icon, version, package, developer, license and source code. */
 @Composable
 fun AboutSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val rows = listOf(
-        stringResource(R.string.settings_version) to
+        AboutRow(
+            stringResource(R.string.settings_version),
             stringResource(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+        ),
         // The installed package, so debug builds show their ".debug" suffix.
-        stringResource(R.string.about_package) to LocalContext.current.packageName,
-        stringResource(R.string.about_developer) to stringResource(R.string.about_developer_name),
+        AboutRow(stringResource(R.string.about_package), context.packageName),
+        AboutRow(stringResource(R.string.about_developer), stringResource(R.string.about_developer_name)),
+        AboutRow(stringResource(R.string.about_license), stringResource(R.string.about_license_name), LICENSE_URL),
+        AboutRow(stringResource(R.string.about_source), stringResource(R.string.about_source_value), SOURCE_URL),
     )
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item(key = "header") {
@@ -57,13 +73,35 @@ fun AboutSection(modifier: Modifier = Modifier) {
                 )
             }
         }
-        groupedItems(rows, key = { it.first }) { (label, value), shape ->
+        groupedItems(rows, key = { it.label }) { row, shape ->
             GroupedListItem(
                 shape = shape,
-                overlineContent = { Text(label) },
-                headlineContent = { Text(value) },
+                overlineContent = { Text(row.label) },
+                headlineContent = { Text(row.value) },
+                trailingContent = row.url?.let {
+                    {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.OpenInNew,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                modifier = row.url?.let { url -> Modifier.clickable { openLink(context, url) } } ?: Modifier,
             )
         }
+    }
+}
+
+private const val SOURCE_URL = "https://github.com/RBWare/Zamboni-Android"
+private const val LICENSE_URL = "$SOURCE_URL/blob/main/LICENSE"
+
+/** Opens [url] in whichever app handles it (the GitHub app, if installed, or a browser). */
+private fun openLink(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (_: ActivityNotFoundException) {
+        // No app can open links; nothing more to do.
     }
 }
 

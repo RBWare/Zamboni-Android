@@ -1,18 +1,23 @@
 package io.rbware.zamboni.data.scores
 
 import io.rbware.zamboni.data.leagues.Leagues
+import io.rbware.zamboni.data.model.Broadcast
+import io.rbware.zamboni.data.model.BroadcastMarket
 import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameDetails
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.GoalStrength
+import io.rbware.zamboni.data.model.RadioStream
 import io.rbware.zamboni.data.model.Schedule
 import io.rbware.zamboni.data.model.Team
+import io.rbware.zamboni.data.model.TeamLogo
 import io.rbware.zamboni.data.model.TeamSide
 import io.rbware.zamboni.data.model.TeamStat
 import io.rbware.zamboni.data.model.TeamStatType
 import io.rbware.zamboni.data.remote.NhlAssistDto
+import io.rbware.zamboni.data.remote.NhlBroadcastDto
 import io.rbware.zamboni.data.remote.NhlGoalDto
 import io.rbware.zamboni.data.remote.NhlLandingResponse
 import io.rbware.zamboni.data.remote.NhlRightRailResponse
@@ -104,6 +109,27 @@ fun NhlLandingResponse.toGameDetails(
             .flatMap { period -> period.goals.map { it.toGoal(period.periodDescriptor) } },
         teamStats = rightRail?.toTeamStats().orEmpty(),
         suggestedRefresh = if (status is GameStatus.Live) NHL_LIVE_GAME_REFRESH else NHL_IDLE_REFRESH,
+        broadcasts = tvBroadcasts.mapNotNull { it.toBroadcast() },
+        radio = listOfNotNull(
+            awayTeam.radioLink?.takeIf { it.startsWith("https://") }?.let { RadioStream(TeamSide.AWAY, it) },
+            homeTeam.radioLink?.takeIf { it.startsWith("https://") }?.let { RadioStream(TeamSide.HOME, it) },
+        ),
+    )
+}
+
+private fun NhlBroadcastDto.toBroadcast(): Broadcast? {
+    val market = when (market) {
+        "N" -> BroadcastMarket.NATIONAL
+        "H" -> BroadcastMarket.HOME
+        "A" -> BroadcastMarket.AWAY
+        else -> return null
+    }
+    val logos = "https://assets.nhle.com/logos/broadcast/$id"
+    return Broadcast(
+        network = network.trim(),
+        market = market,
+        countryCode = countryCode,
+        logo = TeamLogo(light = "$logos-light.svg", dark = "$logos-dark.svg"),
     )
 }
 

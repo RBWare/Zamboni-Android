@@ -28,8 +28,8 @@ android {
         applicationId = "io.rbware.zamboni"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -98,6 +98,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.jsoup)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.session)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.svg)

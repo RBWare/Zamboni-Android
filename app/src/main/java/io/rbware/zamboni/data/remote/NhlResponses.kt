@@ -63,6 +63,19 @@ data class NhlLandingResponse(
     val homeTeam: NhlLandingTeamDto,
     /** Missing before the game starts. */
     val summary: NhlSummaryDto? = null,
+    val tvBroadcasts: List<NhlBroadcastDto> = emptyList(),
+)
+
+/** One TV or streaming broadcast. */
+@Serializable
+data class NhlBroadcastDto(
+    /** Also names the logo: assets.nhle.com/logos/broadcast/{id}-light.svg (not every network has one). */
+    val id: Long,
+    /** "N" national, "H" home team's local, "A" away team's local. */
+    val market: String,
+    val countryCode: String? = null,
+    /** Short name, e.g. "SN1", "NHLN", "Prime Video". */
+    val network: String,
 )
 
 @Serializable
@@ -74,6 +87,8 @@ data class NhlLandingTeamDto(
     val placeName: NhlText? = null,
     val score: Int? = null,
     val sog: Int? = null,
+    /** The team's radio broadcast as an HLS stream (.m3u8). */
+    val radioLink: String? = null,
 )
 
 @Serializable

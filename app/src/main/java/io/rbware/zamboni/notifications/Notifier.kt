@@ -2,22 +2,25 @@ package io.rbware.zamboni.notifications
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.core.net.toUri
 import android.os.Build
 import android.provider.Settings
+import android.text.format.DateFormat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import io.rbware.zamboni.MainActivity
 import io.rbware.zamboni.R
 import io.rbware.zamboni.data.model.Decision
 import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameStatus
+import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.NewsArticle
 import io.rbware.zamboni.data.model.NotificationType
@@ -41,6 +44,10 @@ class Notifier(private val context: Context) {
             NotificationChannelCompat.Builder(type.channelId, type.importance)
                 .setName(context.getString(type.label))
                 .setDescription(context.getString(type.description))
+                .apply {
+                    // Updated every few seconds: never make a sound or vibrate.
+                    if (type == NotificationType.LIVE_UPDATES) setSound(null, null).setVibrationEnabled(false)
+                }
                 .build()
         }
         manager.createNotificationChannelsCompat(channels)
@@ -199,6 +206,86 @@ class Notifier(private val context: Context) {
         else -> context.getString(R.string.period_multi_ot, period - 3)
     }
 
+    /**
+     * A Live Update for [game]: an ongoing notification Android shows as a chip in the status
+     * bar (with [favoriteTeamIds]'s team's score first) and at the top of the shade. Counts the
+     * period clock down on its own while it runs.
+     *
+     * @param lastGoal the most recent goal, when known.
+     */
+    fun buildLiveUpdate(game: Game, lastGoal: Goal?, favoriteTeamIds: Set<String>): Notification {
+        val awayScore = game.awayScore ?: 0
+        val homeScore = game.homeScore ?: 0
+        val favoriteIsAway = game.away.id in favoriteTeamIds && game.home.id !in favoriteTeamIds
+        val chip = if (favoriteIsAway) {
+            context.getString(R.string.live_chip, game.away.abbreviation, awayScore, homeScore)
+        } else {
+            context.getString(R.string.live_chip, game.home.abbreviation, homeScore, awayScore)
+        }
+        val builder = NotificationCompat.Builder(context, NotificationType.LIVE_UPDATES.channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.live_title, game.away.name, awayScore, game.home.name, homeScore))
+            .setContentIntent(openGameIntent(game.id))
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setRequestPromotedOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            // A score isn't private: show it in full on the lock screen, even when the user hides
+            // sensitive notification content there (otherwise only the app name shows).
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setShowWhen(false)
+        when (val status = game.status) {
+            is GameStatus.Live -> {
+                builder.setShortCriticalText(chip)
+                val period = status.period?.let(::periodLabel)
+                val seconds = status.secondsRemaining
+                val text = when {
+                    status.shootout -> context.getString(R.string.period_shootout)
+                    status.intermission && period != null -> context.getString(R.string.status_intermission, period)
+                    period != null && status.clock != null -> context.getString(R.string.live_period_clock, period, status.clock)
+                    else -> period ?: context.getString(R.string.status_in_progress)
+                }
+                builder.setContentText(text)
+                if (status.clockRunning && seconds != null && !status.intermission) {
+                    // The system counts down to the end of the period between updates.
+                    val asOf = status.clockAsOf ?: java.time.Instant.now()
+                    builder.setUsesChronometer(true)
+                        .setChronometerCountDown(true)
+                        .setWhen(asOf.plusSeconds(seconds.toLong()).toEpochMilli())
+                        .setShowWhen(true)
+                        .setSubText(period)
+                }
+                lastGoal?.let { goal ->
+                    val team = if (goal.side == TeamSide.HOME) game.home else game.away
+                    val line = context.getString(R.string.live_last_goal, scorerLabel(goal.scorer), team.abbreviation)
+                    builder.setStyle(NotificationCompat.BigTextStyle().bigText("$text\n$line"))
+                }
+            }
+            else -> {
+                val started = game.startTime <= java.time.Instant.now()
+                val time = DateFormat.getTimeFormat(context).format(java.util.Date.from(game.startTime))
+                builder.setContentText(
+                    if (started) context.getString(R.string.live_starting_soon) else context.getString(R.string.live_starting_at, time),
+                )
+                builder.setShortCriticalText(if (started) context.getString(R.string.live_starting_soon) else time)
+            }
+        }
+        return builder.build()
+    }
+
+    /** A placeholder Live Update, shown for a moment while the live service loads the game. */
+    fun buildLiveUpdatePlaceholder(): Notification =
+        NotificationCompat.Builder(context, NotificationType.LIVE_UPDATES.channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.live_loading))
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)
+            .setSilent(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .build()
+
     private companion object {
         const val NOTIFICATION_ID = 1
         const val GAME_TAG_PREFIX = "game:"
@@ -242,6 +329,7 @@ val NotificationType.channelId: String
         NotificationType.GAME_START -> "game_start"
         NotificationType.GOALS -> "goals"
         NotificationType.FINAL_SCORE -> "final_score"
+        NotificationType.LIVE_UPDATES -> "live_updates"
         NotificationType.BREAKING_NEWS -> "breaking_news"
     }
 

@@ -1,6 +1,7 @@
 package io.rbware.zamboni
 
 import android.app.Application
+import android.util.Log
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -14,14 +15,17 @@ import io.rbware.zamboni.data.logos.TeamLogoPrefetchWorker
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.di.AppContainer
 import io.rbware.zamboni.notifications.NotificationScheduler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.launch
 
 class ZamboniApplication : Application(), SingletonImageLoader.Factory {
     /** Lives as long as the process; for app-wide work that isn't tied to a screen. */
@@ -54,6 +58,26 @@ class ZamboniApplication : Application(), SingletonImageLoader.Factory {
             .withIndex()
             .onEach { (index, inputs) -> NotificationScheduler.sync(this, inputs.enabled, checkNow = index > 0) }
             .launchIn(applicationScope)
+    }
+
+    /**
+     * The app is on screen: run a notification check now, while Android allows it to start the
+     * Live Updates service, so a favorite team's game in progress gets one right away.
+     */
+    fun onAppVisible() {
+        applicationScope.launch {
+            val prefs = container.userPreferencesRepository.userPreferences.first()
+            if (!prefs.onboardingComplete || NotificationType.LIVE_UPDATES !in prefs.notificationTypes) return@launch
+            val next = try {
+                container.notificationChecker.check()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ZamboniApplication", "Check on open failed: $e")
+                null
+            }
+            next?.let { NotificationScheduler.scheduleNext(this@ZamboniApplication, it, fromChain = false) }
+        }
     }
 
     private data class NotificationInputs(

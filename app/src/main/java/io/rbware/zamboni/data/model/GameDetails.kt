@@ -10,7 +10,31 @@ data class GameDetails(
     /** In display order. Empty before the game starts. */
     val teamStats: List<TeamStat>,
     val suggestedRefresh: Duration? = null,
+    /** TV and streaming broadcasts, in the source's order. Empty if the source doesn't list them. */
+    val broadcasts: List<Broadcast> = emptyList(),
+    /** Each team's live radio stream, when the source has one. */
+    val radio: List<RadioStream> = emptyList(),
 )
+
+/** Who a broadcast is for. */
+enum class BroadcastMarket { NATIONAL, HOME, AWAY }
+
+/**
+ * A TV channel or streaming service carrying the game.
+ *
+ * @param network the source's short name, e.g. "SN1" or "Prime Video" (see BroadcastNames).
+ * @param countryCode "US" or "CA", if known.
+ * @param logo the network's logo; not every network has one, so it may fail to load.
+ */
+data class Broadcast(
+    val network: String,
+    val market: BroadcastMarket,
+    val countryCode: String?,
+    val logo: TeamLogo?,
+)
+
+/** A team's radio broadcast as an audio stream (HLS). */
+data class RadioStream(val side: TeamSide, val url: String)
 
 enum class TeamSide { AWAY, HOME }
 
