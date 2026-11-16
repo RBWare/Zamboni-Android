@@ -188,6 +188,9 @@ fun SocialSourcePicker(
     sources: List<SocialSource>?,
     selectedIds: Set<String>,
     onToggle: (SocialSource) -> Unit,
+    teams: List<Team>,
+    favoriteTeamIds: Set<String>,
+    onToggleTeam: (List<SocialSource>) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
 ) {
@@ -199,6 +202,7 @@ fun SocialSourcePicker(
     val platforms = SocialPlatform.entries.filter { builtInSocialGroups(sources, it).isNotEmpty() }
     var platform by rememberSaveable { mutableStateOf(platforms.firstOrNull() ?: SocialPlatform.MASTODON) }
     Column(modifier.fillMaxSize()) {
+        TeamAccountsRow(sources, teams, favoriteTeamIds, isEnabled = { it.id in selectedIds }, onToggleTeam = onToggleTeam)
         if (platforms.size > 1) PlatformSelector(platforms, platform, onSelect = { platform = it })
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
             builtInSocialGroups(sources, platform).forEach { group ->

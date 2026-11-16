@@ -104,7 +104,14 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
                             NewsSourcePicker(state.newsSources, state.newsSourceIds, viewModel::toggleNewsSource)
                         }
                         OnboardingStep.SOCIAL -> StepScaffold(R.string.onboarding_social_title, R.string.onboarding_social_body) {
-                            SocialSourcePicker(state.socialSources, state.socialSourceIds, viewModel::toggleSocialSource)
+                            SocialSourcePicker(
+                                sources = state.socialSources,
+                                selectedIds = state.socialSourceIds,
+                                onToggle = viewModel::toggleSocialSource,
+                                teams = state.teams.orEmpty(),
+                                favoriteTeamIds = state.selectedTeamIds,
+                                onToggleTeam = viewModel::toggleTeamAccounts,
+                            )
                         }
                     }
                 }

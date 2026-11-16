@@ -25,6 +25,8 @@ data class SocialSource(
      * mirror whose copied profile picture has since been deleted). Built-in accounts only.
      */
     val fallbackAvatarUrl: String? = null,
+    /** NHL team code (e.g. "DAL") for a team's own account, so a team's accounts can be turned on together. */
+    val teamCode: String? = null,
 )
 
 /** Kinds of built-in accounts, in the order they're listed. */

@@ -199,6 +199,9 @@ fun SettingsScreen(
                             NewsSourcePicker(state.newsSources, state.preferences.newsSourceIds, viewModel::toggleNewsSource)
                         SettingsSection.SOCIAL_SOURCES -> SocialSourcesSettings(
                             sources = state.socialSources,
+                            teams = state.teams.orEmpty(),
+                            favoriteTeamIds = state.preferences.favoriteTeamIds,
+                            onToggleTeam = viewModel::toggleTeamAccounts,
                             isEnabled = state.preferences::isSocialSourceEnabled,
                             onToggle = viewModel::toggleSocialSource,
                             onRemove = removeSocialSource,

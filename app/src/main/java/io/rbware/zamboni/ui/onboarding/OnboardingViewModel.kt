@@ -97,6 +97,13 @@ class OnboardingViewModel(
     fun toggleSocialSource(source: SocialSource) =
         _uiState.update { it.copy(socialSourceIds = it.socialSourceIds.toggle(source.id)) }
 
+    /** Turns on all of a team's accounts, or turns them off when they're all on already. */
+    fun toggleTeamAccounts(accounts: List<SocialSource>) = _uiState.update { state ->
+        val ids = accounts.map { it.id }
+        val allOn = state.socialSourceIds.containsAll(ids)
+        state.copy(socialSourceIds = if (allOn) state.socialSourceIds - ids.toSet() else state.socialSourceIds + ids)
+    }
+
     /** Saves everything. The app switches to the main UI when the saved flag is observed. */
     fun finish() {
         val state = _uiState.value

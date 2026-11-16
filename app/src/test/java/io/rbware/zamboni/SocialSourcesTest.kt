@@ -54,6 +54,15 @@ class SocialSourcesTest {
     }
 
     @Test
+    fun defaults_teamAccountsAreTaggedOnBothPlatforms() {
+        val dallas = SocialSources.defaults.filter { it.teamCode == "DAL" }
+        assertEquals(setOf(SocialPlatform.MASTODON, SocialPlatform.YOUTUBE), dallas.map { it.platform }.toSet())
+        // Every tagged account is a team's own account; league accounts (NHL shield) aren't tagged.
+        assertTrue(SocialSources.defaults.filter { it.teamCode != null }.all { it.category == SocialCategory.TEAM })
+        assertEquals(32, SocialSources.defaults.count { it.platform == SocialPlatform.YOUTUBE && it.teamCode != null })
+    }
+
+    @Test
     fun defaults_youTubeHasNhlOnAndAll32Teams() {
         val youtube = SocialSources.defaults.filter { it.platform == SocialPlatform.YOUTUBE }
         assertEquals(listOf("NHL"), youtube.filter { it.enabledByDefault }.map { it.name })

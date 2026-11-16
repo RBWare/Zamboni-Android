@@ -38,30 +38,37 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.rbware.zamboni.R
 import io.rbware.zamboni.data.model.SocialPlatform
 import io.rbware.zamboni.data.model.SocialSource
+import io.rbware.zamboni.data.model.Team
 import io.rbware.zamboni.ui.components.GroupedListHorizontalPadding
 import io.rbware.zamboni.ui.components.GroupedListItem
 import io.rbware.zamboni.ui.components.TonalIcon
 import io.rbware.zamboni.ui.components.groupHeader
 import io.rbware.zamboni.ui.components.groupedItemShape
 import io.rbware.zamboni.ui.components.groupedItems
-import io.rbware.zamboni.ui.preferences.builtInSocialGroups
 import io.rbware.zamboni.ui.preferences.PlatformSelector
 import io.rbware.zamboni.ui.preferences.SwitchRow
+import io.rbware.zamboni.ui.preferences.TeamAccountsRow
+import io.rbware.zamboni.ui.preferences.builtInSocialGroups
 
 /**
- * Social accounts by platform. Each platform starts with the user's own accounts and an
- * "Add account" row, then the built-in accounts (featured first, then by category). Built-in
- * accounts can only be turned on or off; the user's own can also be removed.
+ * Social accounts by platform. At the top, a row of NHL teams turns all of a team's accounts
+ * (on every platform) on or off with one tap. Each platform then starts with the user's own
+ * accounts and an "Add account" row, then the built-in accounts (featured first, then by
+ * category). Built-in accounts can only be turned on or off; the user's own can also be removed.
  */
 @Composable
 fun SocialSourcesSettings(
     sources: List<SocialSource>?,
+    teams: List<Team>,
+    favoriteTeamIds: Set<String>,
+    onToggleTeam: (List<SocialSource>) -> Unit,
     isEnabled: (SocialSource) -> Boolean,
     onToggle: (SocialSource) -> Unit,
     onRemove: (SocialSource) -> Unit,
@@ -71,6 +78,7 @@ fun SocialSourcesSettings(
     if (sources == null) return
     var platform by rememberSaveable { mutableStateOf(SocialPlatform.entries.first()) }
     Column(modifier.fillMaxSize()) {
+        TeamAccountsRow(sources, teams, favoriteTeamIds, isEnabled, onToggleTeam)
         PlatformSelector(SocialPlatform.entries, platform, onSelect = { platform = it })
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
             val custom = sources.filter { it.platform == platform && !it.isDefault }

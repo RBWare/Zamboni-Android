@@ -112,6 +112,13 @@ class SettingsViewModel(
         userPreferencesRepository.toggleNewsSource(source.id)
     }
 
+    /** Turns all of a team's built-in accounts on, or off when they're all on already. */
+    fun toggleTeamAccounts(accounts: List<SocialSource>) = viewModelScope.launch {
+        if (accounts.isEmpty()) return@launch
+        val allOn = accounts.all { uiState.value.preferences.isSocialSourceEnabled(it) }
+        userPreferencesRepository.setSocialSourcesEnabled(accounts, enabled = !allOn)
+    }
+
     fun toggleSocialSource(source: SocialSource) = viewModelScope.launch {
         val enabled = uiState.value.preferences.isSocialSourceEnabled(source)
         userPreferencesRepository.setSocialSourceEnabled(source, !enabled)

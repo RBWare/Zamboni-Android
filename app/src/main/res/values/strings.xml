@@ -205,6 +205,15 @@
     <string name="social_all_sources">All accounts</string>
     <string name="social_boosted">%1$s boosted</string>
     <string name="social_content_warning">Content warning: %1$s</string>
+    <string name="social_teams_title">Teams</string>
+    <string name="social_teams_hint">Tap a team to turn on all its accounts. Tap again to turn them off.</string>
+    <string name="social_team_all_on">all on</string>
+    <string name="social_team_some_on">some on</string>
+    <string name="social_team_off">off</string>
+    <plurals name="social_team_accounts">
+        <item quantity="one">%1$s, %2$d account, %3$s</item>
+        <item quantity="other">%1$s, %2$d accounts, %3$s</item>
+    </plurals>
     <string name="social_group_yours">Your accounts</string>
     <string name="social_group_featured">Featured</string>
     <string name="social_group_leagues">Leagues</string>

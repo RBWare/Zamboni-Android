@@ -163,38 +163,38 @@ object SocialSources {
         youtube("UCA3Lillszhzs_Mv0Da0EHlg", "@Jens95", "Jens95", SocialCategory.PERSONALITY),
         youtube("UC_AFyA9FqrZ57bb9QRH77wg", "@TheHockeyGuy", "The Hockey Guy", SocialCategory.PERSONALITY),
         // Teams
-        youtube("UCM7xcVV9BAWEOuiXi0_wqWw", "@AnaheimDucks", "Anaheim Ducks", SocialCategory.TEAM),
-        youtube("UCeNx7hBcFlZ4OXkd-18hJ-g", "@BostonBruinsNHL", "Boston Bruins", SocialCategory.TEAM),
-        youtube("UCygaJ2FHLv2HkmGua22dDYg", "@BuffaloSabres", "Buffalo Sabres", SocialCategory.TEAM),
-        youtube("UCFQqBMe3HSg6ltl09MlLHcQ", "@NHLFlames", "Calgary Flames", SocialCategory.TEAM),
-        youtube("UCsjx7L3gOJJYxmaEMiwxvVQ", "@CarolinaHurricanes", "Carolina Hurricanes", SocialCategory.TEAM),
-        youtube("UC-eEFwGhQy3BGHYKp92KG1A", "@blackhawks", "Chicago Blackhawks", SocialCategory.TEAM),
-        youtube("UCM715eqbBCk1JE4zlAwYLqw", "@ColoradoAvalanche", "Colorado Avalanche", SocialCategory.TEAM),
-        youtube("UCxdPjcb73fJilPpcRxgzi3A", "@BlueJacketsNHL", "Columbus Blue Jackets", SocialCategory.TEAM),
-        youtube("UCxfgTxo6HUmnZkxHWFV5T-A", "@dallasstars", "Dallas Stars", SocialCategory.TEAM),
-        youtube("UCj_N4nmrUUiYd0_Vn5_as_w", "@OfficialRedWings", "Detroit Red Wings", SocialCategory.TEAM),
-        youtube("UCyfbxrAcT9w7pHvDeYCtc0Q", "@edmontonoilers", "Edmonton Oilers", SocialCategory.TEAM),
-        youtube("UCSSc4wVk6telelb58RrLYdg", "@flapanthers", "Florida Panthers", SocialCategory.TEAM),
-        youtube("UCP1bDIMe-hTC2nJprRJHtRg", "@lakings", "Los Angeles Kings", SocialCategory.TEAM),
-        youtube("UCQRr7SxnnndFYuuRUtOIEnA", "@mnwild", "Minnesota Wild", SocialCategory.TEAM),
-        youtube("UCy8mtXf-Lxkyl6I6HMAq6-g", "@canadiensmtl", "Montreal Canadiens", SocialCategory.TEAM),
-        youtube("UCnFXrrRYVwI82BrrFvBxg0w", "@NashvillePredatorsNHL", "Nashville Predators", SocialCategory.TEAM),
-        youtube("UCTB0WLJJBDRFxtqPLndvw6g", "@njdevils", "New Jersey Devils", SocialCategory.TEAM),
-        youtube("UC33CtnOXm7fyNVGmT_3UcMA", "@NY_Islanders", "New York Islanders", SocialCategory.TEAM),
-        youtube("UCXlX2t7ziIJpZQWZcrHGnow", "@nyrangers", "New York Rangers", SocialCategory.TEAM),
-        youtube("UCtgGJaIlIzYE2Ney_P2ps9w", "@OttawaSenatorsNHL", "Ottawa Senators", SocialCategory.TEAM),
-        youtube("UCr6jSk2_SLOmjCG-3GeIStw", "@PhiladelphiaFlyers", "Philadelphia Flyers", SocialCategory.TEAM),
-        youtube("UCykaXC_7OKsseaCnnq1bF-A", "@penguins", "Pittsburgh Penguins", SocialCategory.TEAM),
-        youtube("UCxQ6TOrK5RtG1Rt3GI02EJA", "@sanjosesharks", "San Jose Sharks", SocialCategory.TEAM),
-        youtube("UCxspiBq2xf5pLjz9_NMjoyw", "@SeattleKraken", "Seattle Kraken", SocialCategory.TEAM),
-        youtube("UCtN4OcxSgiJhDMPXo5A5Gqg", "@StLouisBlues", "St. Louis Blues", SocialCategory.TEAM),
-        youtube("UCgC7zVCS9UJg-ziFINnwzyA", "@TBLightningNHL", "Tampa Bay Lightning", SocialCategory.TEAM),
-        youtube("UCMrpTL3zZyNA5S1p9B3FhWg", "@TorontoMapleLeafs", "Toronto Maple Leafs", SocialCategory.TEAM),
-        youtube("UCT0uj5F-RnIAqkp0XLSMaqg", "@UtahMammoth", "Utah Mammoth", SocialCategory.TEAM),
-        youtube("UCr-FENk9ztCt4cBLbL5pI-w", "@Canucks1970", "Vancouver Canucks", SocialCategory.TEAM),
-        youtube("UCyUzGmp1kAmlkNUzAqW9xJw", "@vegasgoldenknights", "Vegas Golden Knights", SocialCategory.TEAM),
-        youtube("UCAX21FrzWy76WBRtOX1LgbA", "@Capitals", "Washington Capitals", SocialCategory.TEAM),
-        youtube("UCRaSe1OUiCAsgFJy8tWAPBw", "@NHLJets", "Winnipeg Jets", SocialCategory.TEAM),
+        youtube("UCM7xcVV9BAWEOuiXi0_wqWw", "@AnaheimDucks", "Anaheim Ducks", SocialCategory.TEAM, team = "ANA"),
+        youtube("UCeNx7hBcFlZ4OXkd-18hJ-g", "@BostonBruinsNHL", "Boston Bruins", SocialCategory.TEAM, team = "BOS"),
+        youtube("UCygaJ2FHLv2HkmGua22dDYg", "@BuffaloSabres", "Buffalo Sabres", SocialCategory.TEAM, team = "BUF"),
+        youtube("UCFQqBMe3HSg6ltl09MlLHcQ", "@NHLFlames", "Calgary Flames", SocialCategory.TEAM, team = "CGY"),
+        youtube("UCsjx7L3gOJJYxmaEMiwxvVQ", "@CarolinaHurricanes", "Carolina Hurricanes", SocialCategory.TEAM, team = "CAR"),
+        youtube("UC-eEFwGhQy3BGHYKp92KG1A", "@blackhawks", "Chicago Blackhawks", SocialCategory.TEAM, team = "CHI"),
+        youtube("UCM715eqbBCk1JE4zlAwYLqw", "@ColoradoAvalanche", "Colorado Avalanche", SocialCategory.TEAM, team = "COL"),
+        youtube("UCxdPjcb73fJilPpcRxgzi3A", "@BlueJacketsNHL", "Columbus Blue Jackets", SocialCategory.TEAM, team = "CBJ"),
+        youtube("UCxfgTxo6HUmnZkxHWFV5T-A", "@dallasstars", "Dallas Stars", SocialCategory.TEAM, team = "DAL"),
+        youtube("UCj_N4nmrUUiYd0_Vn5_as_w", "@OfficialRedWings", "Detroit Red Wings", SocialCategory.TEAM, team = "DET"),
+        youtube("UCyfbxrAcT9w7pHvDeYCtc0Q", "@edmontonoilers", "Edmonton Oilers", SocialCategory.TEAM, team = "EDM"),
+        youtube("UCSSc4wVk6telelb58RrLYdg", "@flapanthers", "Florida Panthers", SocialCategory.TEAM, team = "FLA"),
+        youtube("UCP1bDIMe-hTC2nJprRJHtRg", "@lakings", "Los Angeles Kings", SocialCategory.TEAM, team = "LAK"),
+        youtube("UCQRr7SxnnndFYuuRUtOIEnA", "@mnwild", "Minnesota Wild", SocialCategory.TEAM, team = "MIN"),
+        youtube("UCy8mtXf-Lxkyl6I6HMAq6-g", "@canadiensmtl", "Montreal Canadiens", SocialCategory.TEAM, team = "MTL"),
+        youtube("UCnFXrrRYVwI82BrrFvBxg0w", "@NashvillePredatorsNHL", "Nashville Predators", SocialCategory.TEAM, team = "NSH"),
+        youtube("UCTB0WLJJBDRFxtqPLndvw6g", "@njdevils", "New Jersey Devils", SocialCategory.TEAM, team = "NJD"),
+        youtube("UC33CtnOXm7fyNVGmT_3UcMA", "@NY_Islanders", "New York Islanders", SocialCategory.TEAM, team = "NYI"),
+        youtube("UCXlX2t7ziIJpZQWZcrHGnow", "@nyrangers", "New York Rangers", SocialCategory.TEAM, team = "NYR"),
+        youtube("UCtgGJaIlIzYE2Ney_P2ps9w", "@OttawaSenatorsNHL", "Ottawa Senators", SocialCategory.TEAM, team = "OTT"),
+        youtube("UCr6jSk2_SLOmjCG-3GeIStw", "@PhiladelphiaFlyers", "Philadelphia Flyers", SocialCategory.TEAM, team = "PHI"),
+        youtube("UCykaXC_7OKsseaCnnq1bF-A", "@penguins", "Pittsburgh Penguins", SocialCategory.TEAM, team = "PIT"),
+        youtube("UCxQ6TOrK5RtG1Rt3GI02EJA", "@sanjosesharks", "San Jose Sharks", SocialCategory.TEAM, team = "SJS"),
+        youtube("UCxspiBq2xf5pLjz9_NMjoyw", "@SeattleKraken", "Seattle Kraken", SocialCategory.TEAM, team = "SEA"),
+        youtube("UCtN4OcxSgiJhDMPXo5A5Gqg", "@StLouisBlues", "St. Louis Blues", SocialCategory.TEAM, team = "STL"),
+        youtube("UCgC7zVCS9UJg-ziFINnwzyA", "@TBLightningNHL", "Tampa Bay Lightning", SocialCategory.TEAM, team = "TBL"),
+        youtube("UCMrpTL3zZyNA5S1p9B3FhWg", "@TorontoMapleLeafs", "Toronto Maple Leafs", SocialCategory.TEAM, team = "TOR"),
+        youtube("UCT0uj5F-RnIAqkp0XLSMaqg", "@UtahMammoth", "Utah Mammoth", SocialCategory.TEAM, team = "UTA"),
+        youtube("UCr-FENk9ztCt4cBLbL5pI-w", "@Canucks1970", "Vancouver Canucks", SocialCategory.TEAM, team = "VAN"),
+        youtube("UCyUzGmp1kAmlkNUzAqW9xJw", "@vegasgoldenknights", "Vegas Golden Knights", SocialCategory.TEAM, team = "VGK"),
+        youtube("UCAX21FrzWy76WBRtOX1LgbA", "@Capitals", "Washington Capitals", SocialCategory.TEAM, team = "WSH"),
+        youtube("UCRaSe1OUiCAsgFJy8tWAPBw", "@NHLJets", "Winnipeg Jets", SocialCategory.TEAM, team = "WPG"),
     )
 
     val defaults: List<SocialSource> = mastodon + youtube
@@ -203,10 +203,22 @@ object SocialSources {
     private fun mastodon(handle: String, name: String, category: SocialCategory, on: Boolean = false, logo: String? = null): SocialSource =
         requireNotNull(MastodonHandle.parse(handle)) { "Bad Mastodon handle: $handle" }
             .toSource(name, isDefault = true, enabledByDefault = on, category = category)
-            .copy(fallbackAvatarUrl = logo?.let { NhlLogos.forTeam(it).light })
+            .copy(
+                fallbackAvatarUrl = logo?.let { NhlLogos.forTeam(it).light },
+                teamCode = logo.takeIf { category == SocialCategory.TEAM && it != "NHL" },
+            )
 
-    private fun youtube(channelId: String, handle: String?, name: String, category: SocialCategory, on: Boolean = false): SocialSource {
+    /** @param team NHL team code for a team's own channel. */
+    private fun youtube(
+        channelId: String,
+        handle: String?,
+        name: String,
+        category: SocialCategory,
+        on: Boolean = false,
+        team: String? = null,
+    ): SocialSource {
         require(YouTubeChannel.CHANNEL_ID.matches(channelId)) { "Bad YouTube channel ID: $channelId" }
         return YouTubeChannel(channelId, handle).toSource(name, isDefault = true, enabledByDefault = on, category = category)
+            .copy(teamCode = team)
     }
 }

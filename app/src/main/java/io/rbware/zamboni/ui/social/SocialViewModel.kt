@@ -9,10 +9,12 @@ import io.rbware.zamboni.ZamboniApplication
 import io.rbware.zamboni.data.model.SocialPlatform
 import io.rbware.zamboni.data.model.SocialPost
 import io.rbware.zamboni.data.model.SocialSource
+import io.rbware.zamboni.data.model.Team
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.preferences.isSocialSourceEnabled
 import io.rbware.zamboni.data.social.SocialFeedRepository
 import io.rbware.zamboni.data.social.SocialSourceRepository
+import io.rbware.zamboni.data.teams.TeamRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,10 @@ data class SocialUiState(
     val loadFailed: Boolean = false,
     /** Accounts that failed on the last load while others succeeded; shown once as a snackbar. */
     val failedSources: List<SocialSource> = emptyList(),
+    /** Every account, on or off; the empty state offers to turn on a team's accounts. */
+    val allSources: List<SocialSource> = emptyList(),
+    val teams: List<Team> = emptyList(),
+    val favoriteTeamIds: Set<String> = emptySet(),
 ) {
     val visiblePosts: List<SocialPost>?
         get() = posts?.filter { post ->
@@ -55,8 +61,9 @@ data class SocialUiState(
 
 class SocialViewModel(
     socialSourceRepository: SocialSourceRepository,
-    userPreferencesRepository: UserPreferencesRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     private val socialFeedRepository: SocialFeedRepository,
+    teamRepository: TeamRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SocialUiState())
@@ -68,20 +75,42 @@ class SocialViewModel(
     init {
         viewModelScope.launch {
             combine(socialSourceRepository.sources, userPreferencesRepository.userPreferences) { sources, prefs ->
-                sources.filter { prefs.isSocialSourceEnabled(it) }
+                Triple(sources, sources.filter { prefs.isSocialSourceEnabled(it) }, prefs.favoriteTeamIds)
             }
                 .distinctUntilChanged()
-                .collect { enabled ->
+                .collect { (all, enabled, favorites) ->
+                    val previous = _uiState.value.enabledSources
                     _uiState.update { state ->
                         state.copy(
                             enabledSources = enabled,
+                            allSources = all,
+                            favoriteTeamIds = favorites,
                             sourceFilter = state.sourceFilter?.takeIf { id -> enabled.any { it.id == id } },
                             platformFilter = state.platformFilter?.takeIf { platform -> enabled.any { it.platform == platform } },
                         )
                     }
-                    load(enabled, userInitiated = false)
+                    // Only a change in which accounts are on needs a reload.
+                    if (enabled != previous) load(enabled, userInitiated = false)
                 }
         }
+        viewModelScope.launch {
+            val teams = try {
+                teamRepository.getTeams()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Without teams the empty state just leaves out the team row.
+                emptyList()
+            }
+            _uiState.update { it.copy(teams = teams) }
+        }
+    }
+
+    /** Turns on all of a team's accounts, or turns them off when they're all on already. */
+    fun toggleTeamAccounts(accounts: List<SocialSource>) = viewModelScope.launch {
+        if (accounts.isEmpty()) return@launch
+        val enabledIds = _uiState.value.enabledSources.orEmpty().mapTo(HashSet()) { it.id }
+        userPreferencesRepository.setSocialSourcesEnabled(accounts, enabled = !accounts.all { it.id in enabledIds })
     }
 
     fun setSourceFilter(sourceId: String?) = _uiState.update { it.copy(sourceFilter = sourceId) }
@@ -146,6 +175,7 @@ class SocialViewModel(
                     container.socialSourceRepository,
                     container.userPreferencesRepository,
                     container.socialFeedRepository,
+                    container.teamRepository,
                 )
             }
         }

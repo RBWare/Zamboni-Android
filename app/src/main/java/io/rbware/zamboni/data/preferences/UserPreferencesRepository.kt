@@ -71,12 +71,20 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun toggleNewsSource(sourceId: String) = toggle(Keys.NEWS_SOURCES, sourceId)
 
     /** Turns a social account on or off, storing only how it differs from its default. */
-    suspend fun setSocialSourceEnabled(source: SocialSource, enabled: Boolean) {
+    suspend fun setSocialSourceEnabled(source: SocialSource, enabled: Boolean) = setSocialSourcesEnabled(listOf(source), enabled)
+
+    /** Turns several accounts on or off in one save (e.g. all of a team's accounts). */
+    suspend fun setSocialSourcesEnabled(sources: Collection<SocialSource>, enabled: Boolean) {
         dataStore.edit { prefs ->
-            val disabled = prefs[Keys.DISABLED_SOCIAL_SOURCES].orEmpty() - source.id
-            val on = prefs[Keys.ENABLED_SOCIAL_SOURCES].orEmpty() - source.id
-            prefs[Keys.DISABLED_SOCIAL_SOURCES] = if (!enabled && source.enabledByDefault) disabled + source.id else disabled
-            prefs[Keys.ENABLED_SOCIAL_SOURCES] = if (enabled && !source.enabledByDefault) on + source.id else on
+            var disabled = prefs[Keys.DISABLED_SOCIAL_SOURCES].orEmpty()
+            var on = prefs[Keys.ENABLED_SOCIAL_SOURCES].orEmpty()
+            // Only differences from each account's default are stored.
+            for (source in sources) {
+                disabled = if (!enabled && source.enabledByDefault) disabled + source.id else disabled - source.id
+                on = if (enabled && !source.enabledByDefault) on + source.id else on - source.id
+            }
+            prefs[Keys.DISABLED_SOCIAL_SOURCES] = disabled
+            prefs[Keys.ENABLED_SOCIAL_SOURCES] = on
         }
     }
 

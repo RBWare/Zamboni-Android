@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -35,6 +38,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -57,6 +61,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,6 +71,7 @@ import io.rbware.zamboni.data.model.SocialPlatform
 import io.rbware.zamboni.data.model.SocialSource
 import io.rbware.zamboni.ui.components.MessageState
 import io.rbware.zamboni.ui.news.openArticle
+import io.rbware.zamboni.ui.preferences.TeamAccountsRow
 
 /**
  * Social tab: recent posts from the accounts the user follows, newest first. Posts open on
@@ -144,10 +150,10 @@ fun SocialScreen(
             ) {
                 val posts = state.visiblePosts
                 when {
-                    state.enabledSources?.isEmpty() == true -> MessageState(
-                        message = stringResource(R.string.social_no_sources),
-                        actionLabel = stringResource(R.string.social_choose_sources),
-                        onAction = onOpenSettings,
+                    state.enabledSources?.isEmpty() == true -> NoSourcesState(
+                        state = state,
+                        onToggleTeam = viewModel::toggleTeamAccounts,
+                        onOpenSettings = onOpenSettings,
                     )
                     posts == null && state.loadFailed -> MessageState(
                         message = stringResource(R.string.social_load_failed),
@@ -316,4 +322,36 @@ private fun AccountRow(title: String, subtitle: String?, selected: Boolean, onCl
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
     )
+}
+
+/**
+ * Shown when no accounts are on: the team row turns on a team's accounts right here (the feed
+ * then loads), and the button opens Settings for everything else. Scrollable so
+ * pull-to-refresh still works.
+ */
+@Composable
+private fun NoSourcesState(state: SocialUiState, onToggleTeam: (List<SocialSource>) -> Unit, onOpenSettings: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.height(72.dp))
+        Text(
+            stringResource(R.string.social_no_sources),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Spacer(Modifier.height(24.dp))
+        TeamAccountsRow(
+            sources = state.allSources,
+            teams = state.teams,
+            favoriteTeamIds = state.favoriteTeamIds,
+            // Nothing is on here, so every team starts off.
+            isEnabled = { false },
+            onToggleTeam = onToggleTeam,
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(onClick = onOpenSettings) { Text(stringResource(R.string.social_choose_sources)) }
+    }
 }
