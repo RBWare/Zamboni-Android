@@ -103,6 +103,8 @@ internal fun gameStatus(
             clock = clock?.timeRemaining?.let(::trimClock)?.takeUnless { clock.inIntermission },
             intermission = clock?.inIntermission == true,
             shootout = period?.periodType == "SO",
+            secondsRemaining = clock?.secondsRemaining?.takeUnless { clock.inIntermission },
+            clockRunning = clock?.running == true && !clock.inIntermission,
         )
         "OFF", "FINAL" -> GameStatus.Final(
             when (period?.periodType) {

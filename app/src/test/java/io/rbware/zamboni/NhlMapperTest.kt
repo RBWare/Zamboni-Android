@@ -53,7 +53,7 @@ class NhlMapperTest {
         assertEquals(NHL_LIVE_SCHEDULE_REFRESH, schedule.suggestedRefresh)
 
         val live = schedule.games.first { it.id == "nhl-2026020321" }
-        assertEquals(GameStatus.Live(period = 3, clock = "8:54"), live.status)
+        assertEquals(GameStatus.Live(period = 3, clock = "8:54", secondsRemaining = 534, clockRunning = false), live.status)
         assertEquals("Seattle Kraken", live.away.name)
         assertEquals("nhl-car", live.home.id)
         assertEquals(1, live.awayScore)

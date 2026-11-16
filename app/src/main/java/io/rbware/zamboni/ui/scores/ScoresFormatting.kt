@@ -2,6 +2,10 @@ package io.rbware.zamboni.ui.scores
 
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -62,7 +66,7 @@ fun gameStatusText(game: Game): String = when (val status = game.status) {
             // Shown under the LIVE badge, so say something different.
             period == null -> stringResource(R.string.status_in_progress)
             status.intermission -> stringResource(R.string.status_intermission, periodLabel(period))
-            status.clock != null -> "${periodLabel(period)} ${status.clock}"
+            status.clock != null -> "${periodLabel(period)} ${liveClockText(status)}"
             else -> periodLabel(period)
         }
     }
@@ -71,4 +75,24 @@ fun gameStatusText(game: Game): String = when (val status = game.status) {
         Decision.OVERTIME -> stringResource(R.string.status_final_ot)
         Decision.SHOOTOUT -> stringResource(R.string.status_final_so)
     }
+}
+
+/**
+ * The period clock, counting down once a second while it's running, from the moment the data
+ * was produced. Fixes itself on the next update (e.g. after a whistle the data hadn't shown yet).
+ */
+@Composable
+private fun liveClockText(status: GameStatus.Live): String? {
+    // When the source didn't say how old the data is, count from when it reached the screen.
+    val shownAt = remember(status) { Instant.now() }
+    if (!status.clockRunning || status.secondsRemaining == null) return status.clock
+    val now by produceState(Instant.now(), status) {
+        while (true) {
+            value = Instant.now()
+            // Tick on the second boundary so every card changes together.
+            delay(1_000 - System.currentTimeMillis() % 1_000)
+        }
+    }
+    val seconds = status.secondsRemainingAt(now, since = shownAt) ?: return status.clock
+    return "%d:%02d".format(seconds / 60, seconds % 60)
 }

@@ -63,7 +63,7 @@ class GameDetailsMapperTest {
     @Test
     fun liveGame_mapsClockAndPowerPlayGoals() {
         val details = load("game_live.json")
-        assertEquals(GameStatus.Live(period = 2, clock = "1:40"), details.game.status)
+        assertEquals(GameStatus.Live(period = 2, clock = "1:40", secondsRemaining = 100, clockRunning = true), details.game.status)
         assertEquals(1, details.game.awayScore)
         assertEquals(4, details.game.homeScore)
         assertEquals(5, details.goals.size)

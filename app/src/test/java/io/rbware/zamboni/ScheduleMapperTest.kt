@@ -32,7 +32,7 @@ class ScheduleMapperTest {
     @Test
     fun liveGame_mapsPeriodClockAndScores() {
         val live = games[0]
-        assertEquals(GameStatus.Live(period = 2, clock = "9:08", intermission = false), live.status)
+        assertEquals(GameStatus.Live(period = 2, clock = "9:08", intermission = false, secondsRemaining = 548, clockRunning = true), live.status)
         assertEquals(1, live.awayScore)
         assertEquals(4, live.homeScore)
         assertEquals(Instant.parse("2026-11-14T18:00:00Z"), live.startTime)

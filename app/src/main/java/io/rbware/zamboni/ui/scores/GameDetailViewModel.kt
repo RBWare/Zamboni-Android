@@ -44,7 +44,7 @@ data class GameDetailUiState(
         }
 
     private companion object {
-        val MIN_AUTO_REFRESH = 3.seconds
+        val MIN_AUTO_REFRESH = 2.seconds
     }
 }
 

@@ -96,6 +96,8 @@ fun GameDetail(
     today: LocalDate,
     closeStyle: DetailCloseStyle,
     onClose: () -> Unit,
+    /** Called with each fresh copy of the game, so the scores list can show the same. */
+    onGameLoaded: (Game) -> Unit = {},
     viewModel: GameDetailViewModel = viewModel(factory = GameDetailViewModel.Factory),
 ) {
     LaunchedEffect(gameId) { viewModel.show(gameId) }
@@ -111,10 +113,12 @@ fun GameDetail(
         )
     }
 
-    // Live updates while visible, on the API's suggested interval.
+    LaunchedEffect(details?.game) { details?.game?.let(onGameLoaded) }
+
+    // Live updates while visible, on the API's suggested interval. Restarts after every load.
     val lifecycleOwner = LocalLifecycleOwner.current
     val autoRefreshInterval = current?.autoRefreshInterval
-    LaunchedEffect(autoRefreshInterval, gameId) {
+    LaunchedEffect(autoRefreshInterval, gameId, details) {
         if (autoRefreshInterval == null) return@LaunchedEffect
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {

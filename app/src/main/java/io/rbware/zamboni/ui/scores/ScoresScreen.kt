@@ -121,7 +121,7 @@ fun ScoresScreen(
     // Restarts after each response, since the API returns a fresh interval every time.
     val lifecycleOwner = LocalLifecycleOwner.current
     val autoRefreshInterval = state.autoRefreshInterval
-    LaunchedEffect(autoRefreshInterval, state.date) {
+    LaunchedEffect(autoRefreshInterval, state.date, state.loadCount) {
         if (autoRefreshInterval == null) return@LaunchedEffect
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
@@ -159,6 +159,7 @@ fun ScoresScreen(
             today = state.today,
             closeStyle = if (sideBySide) DetailCloseStyle.CLOSE else DetailCloseStyle.BACK,
             onClose = { selectedGameId = null },
+            onGameLoaded = viewModel::applyGameUpdate,
         )
     }
 

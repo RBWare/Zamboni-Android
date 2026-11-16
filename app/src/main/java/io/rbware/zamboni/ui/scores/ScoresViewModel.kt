@@ -55,6 +55,8 @@ data class ScoresUiState(
      * games are final). Follows the API's suggested interval.
      */
     val autoRefreshInterval: Duration? = null,
+    /** Changes on every successful load, so the auto-refresh timer restarts from it. */
+    val loadCount: Int = 0,
 ) {
     val isToday get() = date == today
     val hasActiveFilter get() = filter.leagueIds.isNotEmpty() || filter.favoritesOnly
@@ -68,6 +70,7 @@ private data class GamesLoad(
     val isLoading: Boolean = false,
     val loadFailed: Boolean = false,
     val refreshFailed: Boolean = false,
+    val loadCount: Int = 0,
 )
 
 class ScoresViewModel(
@@ -115,6 +118,7 @@ class ScoresViewModel(
             autoRefreshInterval = load.suggestedRefresh
                 ?.coerceAtLeast(MIN_AUTO_REFRESH)
                 ?.takeIf { load.games.orEmpty().any { it.status.canChange } },
+            loadCount = load.loadCount,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScoresUiState(selectedDate.value, today))
 
@@ -146,6 +150,15 @@ class ScoresViewModel(
     fun refreshSilently() {
         if (loadJob?.isActive == true) return
         load(clearExisting = false, silent = true)
+    }
+
+    /**
+     * Newer data for one game, e.g. from its details (which update more often than the list).
+     * Keeps the list in step with what the details showed.
+     */
+    fun applyGameUpdate(game: Game) = gamesLoad.update { load ->
+        val games = load.games ?: return@update load
+        load.copy(games = games.map { it.updatedWith(game) })
     }
 
     fun refreshErrorShown() = gamesLoad.update { it.copy(refreshFailed = false) }
@@ -183,7 +196,16 @@ class ScoresViewModel(
         loadJob = viewModelScope.launch {
             try {
                 val schedule = scoresRepository.getSchedule(date)
-                gamesLoad.value = GamesLoad(games = schedule.games, suggestedRefresh = schedule.suggestedRefresh)
+                gamesLoad.update { current ->
+                    // The list's source can lag behind what the details already showed; keep
+                    // whichever snapshot of each game is newer.
+                    val shown = current.games.orEmpty().associateBy { it.id }
+                    GamesLoad(
+                        games = schedule.games.map { game -> shown[game.id]?.let { game.newerOf(it) } ?: game },
+                        suggestedRefresh = schedule.suggestedRefresh,
+                        loadCount = current.loadCount + 1,
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -202,7 +224,7 @@ class ScoresViewModel(
     companion object {
         private const val TAG = "ScoresViewModel"
         private const val KEY_DATE = "selected_date"
-        private val MIN_AUTO_REFRESH = 5.seconds
+        private val MIN_AUTO_REFRESH = 2.seconds
 
         val Factory = viewModelFactory {
             initializer {
@@ -220,3 +242,14 @@ class ScoresViewModel(
 /** Whether a game in this state can still change (start, score, or finish). */
 private val GameStatus.canChange: Boolean
     get() = this is GameStatus.Scheduled || this is GameStatus.Live
+
+/** This (just loaded) game, unless [shown] is a newer live snapshot of it. */
+private fun Game.newerOf(shown: Game): Game {
+    val mine = dataAsOf
+    val theirs = shown.dataAsOf
+    return if (mine != null && theirs != null && theirs > mine && status is GameStatus.Live) {
+        copy(status = shown.status, awayScore = shown.awayScore, homeScore = shown.homeScore)
+    } else {
+        this
+    }
+}

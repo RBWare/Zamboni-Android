@@ -1,6 +1,7 @@
 package io.rbware.zamboni.data.remote
 
 import kotlinx.serialization.json.Json
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 
@@ -14,14 +15,17 @@ interface NhlApi {
      * Games for one game day, with goals. Days without games (e.g. the off-season) return an
      * empty list rather than an error.
      *
+     * Wrapped in a [Response] because its cache headers tell how old the data is (see
+     * NhlFreshness).
+     *
      * @param date `YYYY-MM-DD` (North American game day), or "now".
      */
     @GET("v1/score/{date}")
-    suspend fun getScore(@Path("date") date: String): NhlScoreResponse
+    suspend fun getScore(@Path("date") date: String): Response<NhlScoreResponse>
 
-    /** Header, goals and three stars for one game. Responds 404 for unknown IDs. */
+    /** Header, goals and three stars for one game. Responds 404 for unknown IDs. Wrapped like [getScore]. */
     @GET("v1/gamecenter/{gameId}/landing")
-    suspend fun getLanding(@Path("gameId") gameId: Long): NhlLandingResponse
+    suspend fun getLanding(@Path("gameId") gameId: Long): Response<NhlLandingResponse>
 
     /** Team stats comparison (once the game has started) and other sidebar data. */
     @GET("v1/gamecenter/{gameId}/right-rail")
