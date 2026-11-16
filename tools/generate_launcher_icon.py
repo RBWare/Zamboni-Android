@@ -1,90 +1,169 @@
-"""Generates the launcher icon (foreground + monochrome vector drawables) and SVG previews.
+"""Generates the launcher icon, its themed (monochrome) layer and the notification icon.
 
-Usage: python3 tools/generate_launcher_icon.py OUTPUT_DIR
-Then copy ic_launcher_foreground.xml and ic_launcher_monochrome.xml into app/src/main/res/drawable/.
-The background color is @color/ic_launcher_background (keep it in sync with BG below).
+The icon is a dark puck sliding left across bright ice, with three speed lines behind it.
+
+Usage: python3 tools/generate_launcher_icon.py [RES_DIR] [PREVIEW_DIR]
+  RES_DIR      the app's res folder (default: app/src/main/res). These files are written:
+               drawable/ic_launcher_background.xml, drawable/ic_launcher_foreground.xml,
+               drawable/ic_launcher_monochrome.xml and drawable/ic_notification.xml.
+  PREVIEW_DIR  optional; also writes SVG previews there (full layer and circle-masked).
+
+All art is in the 108x108 adaptive-icon space. Launchers show the middle 72x72, and the
+foreground must stay inside the 66dp safe circle (radius 33 around 54,54); main() checks it.
+@color/ic_launcher_background (splash screen circle) should match ICE_MID.
 """
-import sys, os
-OUT = sys.argv[1]
-BG = "#4A9FE8"
+import math
+import os
+import sys
+
+ICE_TOP = "#F3F8FF"
+ICE_BOTTOM = "#C6DDF6"
+ICE_MID = "#DCEAF9"
+PUCK_SIDE = "#11161D"
+PUCK_TOP = "#2E3743"
+PUCK_RING = "#3E4958"
+SPEED = "#2B5EA7"
+SHADOW = "#0B2F5E"
+
+# Moves the drawing so its overall bounds sit centered in the safe zone.
+DX, DY = 4, -2
+
+
+def ellipse(cx, cy, rx, ry):
+    return f"M{cx - rx},{cy}a{rx},{ry} 0,1 1,{2 * rx},0a{rx},{ry} 0,1 1,{-2 * rx},0z"
+
 
 def rrect(x, y, w, h, r):
-    return (f"M{x+r},{y}h{w-2*r}a{r},{r} 0,0 1,{r},{r}v{h-2*r}a{r},{r} 0,0 1,-{r},{r}"
-            f"h-{w-2*r}a{r},{r} 0,0 1,-{r},-{r}v-{h-2*r}a{r},{r} 0,0 1,{r},-{r}z")
+    return (f"M{x + r},{y}h{w - 2 * r}a{r},{r} 0,0 1,{r},{r}v{h - 2 * r}a{r},{r} 0,0 1,{-r},{r}"
+            f"h{-(w - 2 * r)}a{r},{r} 0,0 1,{-r},{-r}v{-(h - 2 * r)}a{r},{r} 0,0 1,{r},{-r}z")
 
-def circle(cx, cy, r):
-    return f"M{cx-r},{cy}a{r},{r} 0,1 1,{2*r},0a{r},{r} 0,1 1,-{2*r},0z"
 
-def rect(x, y, w, h):
-    return f"M{x},{y}h{w}v{h}h-{w}z"
-
-# Unscaled scenery (fills the mask; the launcher shape crops it).
-scenery = [
-    ("#E6F6FF", "M0,72H108V108H0Z"),            # ice
-    ("#FFFFFF", rrect(66, 76, 14, 2.4, 1.2)),    # shine on the fresh ice behind the machine
-    ("#FFFFFF", rrect(73, 80.5, 9, 2.4, 1.2)),
+# Puck geometry before the DX/DY shift.
+CX, TOP_Y, RX, RY, DEPTH = 57, 48.6, 20, 7.5, 9.4
+LEFT, RIGHT = CX - RX, CX + RX
+SIDE = f"M{LEFT},50V{TOP_Y + DEPTH}A{RX},{RY} 0,0 0,{RIGHT},{TOP_Y + DEPTH}V50z"
+# For one-color versions: the side band with a gap under the top face, so the two read apart.
+SIDE_CUT = (f"M{LEFT},{TOP_Y + 3}V{TOP_Y + DEPTH}A{RX},{RY} 0,0 0,{RIGHT},{TOP_Y + DEPTH}"
+            f"V{TOP_Y + 3}A{RX},{RY} 0,0 1,{LEFT},{TOP_Y + 3}z")
+TOP = ellipse(CX, TOP_Y, RX, RY)
+SPEED_LINES = [  # (x, y, length, alpha): longest nearest the top, fading out lower down
+    (22, 44.5, 11, 1.0),
+    (25, 51.5, 8, 0.75),
+    (28, 58.5, 5, 0.5),
 ]
-# The machine, facing left: a tall boxy hopper with a rounded rear, a lower step at the front
-# where the driver sits, and the scraper sticking out low at the front. Drawn around
-# (51,54.3), then centered and scaled into the safe zone.
-BODY = "M40,38H74a12,12 0,0 1,12,12V64a4,4 0,0 1,-4,4H40Z"
-CAB = "M24,54a4,4 0,0 1,4,-4H42V68H28a4,4 0,0 1,-4,-4Z"
-machine = [
-    ("#B9DDF2", rrect(16, 70.5, 72, 4, 2)),     # shadow
-    ("#2D4B73", rrect(16, 63, 10, 5.5, 2)),     # scraper at the front
-    ("#FFFFFF", BODY),                          # tank and snow hopper
-    ("#FFFFFF", CAB),                           # front step, under the driver
-    ("#D7ECF9", rrect(48, 43, 28, 4, 2)),       # hopper panel line
-    ("#E53935", rect(24, 56, 62, 4.5)),         # stripe
-    ("#2D4B73", rrect(26, 37, 3.4, 14, 1.7)),   # steering post
-    ("#2D4B73", rrect(24, 36, 8, 3, 1.5)),      # steering wheel, side on
-    ("#2D4B73", rrect(38.5, 40, 3.4, 11, 1.7)), # seat back
-    ("#2D4B73", rrect(30.5, 44.5, 8, 6, 2.5)),  # driver
-    ("#2D4B73", circle(34.5, 41, 3.6)),
-    ("#263238", circle(36, 68, 4.6)),           # wheels
-    ("#CFD8DC", circle(36, 68, 1.8)),
-    ("#263238", circle(74, 68, 4.6)),
-    ("#CFD8DC", circle(74, 68, 1.8)),
-]
-SCALE = 0.88
-TX, TY = 54 - 51, 54 - 54.3   # move the machine's center to the icon center
 
-def svg(layers_bg=True, mask=True):
-    g = "".join(f'<path fill="{c}" d="{d}"/>' for c, d in machine)
-    s = "".join(f'<path fill="{c}" d="{d}"/>' for c, d in scenery)
-    bg = f'<rect width="108" height="108" fill="{BG}"/>' if layers_bg else ""
-    body = (f'{bg}{s}<g transform="translate(54,54) scale({SCALE}) translate(-54,-54) translate({TX},{TY})">{g}</g>')
-    if mask:
-        body = f'<clipPath id="m"><circle cx="54" cy="54" r="40"/></clipPath><g clip-path="url(#m)">{body}</g>' \
-               '<circle cx="54" cy="54" r="33" fill="none" stroke="#f0f" stroke-width="0.3" stroke-dasharray="1,1"/>'
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="432" height="432">{body}</svg>'
+# (fill, alpha, pathData, stroke width or None for a fill)
+FOREGROUND = [
+    (SHADOW, 0.18, ellipse(CX, 66, 21, 5), None),
+    (PUCK_SIDE, 1.0, SIDE, None),
+    (PUCK_TOP, 1.0, TOP, None),
+    (PUCK_RING, 1.0, ellipse(CX, TOP_Y, 14, 4.6), 1.0),
+] + [(SPEED, a, rrect(x, y, w, 3, 1.5), None) for x, y, w, a in SPEED_LINES]
 
-open(os.path.join(OUT, "preview_circle.svg"), "w").write(svg())
-open(os.path.join(OUT, "preview_full.svg"), "w").write(svg(mask=False))
+MONOCHROME = [SIDE_CUT, TOP] + [rrect(x, y, w, 3, 1.5) for x, y, w, _ in SPEED_LINES]
 
-def vector(paths_scenery, paths_machine, comment):
-    def p(c, d): return f'    <path\n        android:fillColor="{c}"\n        android:pathData="{d}" />\n'
-    def gp(c, d): return f'        <path\n            android:fillColor="{c}"\n            android:pathData="{d}" />\n'
-    return ('<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
-            '    android:width="108dp"\n    android:height="108dp"\n'
-            '    android:viewportWidth="108"\n    android:viewportHeight="108">\n'
-            f'    <!-- {comment} -->\n'
-            + "".join(p(c, d) for c, d in paths_scenery)
-            + f'    <group\n        android:pivotX="54"\n        android:pivotY="54"\n'
-              f'        android:scaleX="{SCALE}"\n        android:scaleY="{SCALE}">\n'
-            + f'        <group\n            android:translateX="{TX}"\n            android:translateY="{TY}">\n'
-            + "".join("    " + gp(c, d) for c, d in paths_machine)
-            + '        </group>\n    </group>\n</vector>\n')
+# Points on the outline of the foreground (shadow excluded: it may fade at the mask edge).
+OUTLINE = [(LEFT, TOP_Y), (RIGHT, TOP_Y), (CX, TOP_Y - RY), (LEFT, TOP_Y + DEPTH), (RIGHT, TOP_Y + DEPTH),
+           (CX, TOP_Y + DEPTH + RY)] + [p for x, y, w, _ in SPEED_LINES for p in ((x, y), (x, y + 3))]
 
-fg = vector(scenery, machine, "Ice resurfacer on fresh ice. Generated by tools/generate_launcher_icon.py; keep the machine inside the 66dp safe zone.")
-# Monochrome: one-color silhouette, wheel hubs as holes, no scenery.
-W = "#FFFFFFFF"
-mono_machine = [(W, d) for c, d in machine if c not in ("#B9DDF2", "#CFD8DC", "#FFF59D", "#E53935", "#D7ECF9") ]
-mono = vector([], mono_machine, "Themed-icon silhouette of the ice resurfacer.")
-# Hubs as holes: wheel paths become rings via evenOdd.
-for cx in (36, 74):
-    full = circle(cx, 68, 4.6)
-    mono = mono.replace(f'android:pathData="{full}"',
-                        f'android:fillType="evenOdd"\n                android:pathData="{full}{circle(cx, 68, 1.8)}"')
-open(os.path.join(OUT, "ic_launcher_foreground.xml"), "w").write(fg)
-open(os.path.join(OUT, "ic_launcher_monochrome.xml"), "w").write(mono)
+
+def check_safe_zone():
+    for x, y in OUTLINE:
+        d = math.hypot(x + DX - 54, y + DY - 54)
+        if d > 33:
+            sys.exit(f"Point ({x},{y}) is {d:.1f} from the center, outside the 33dp safe zone")
+
+
+HEADER = ('<vector xmlns:android="http://schemas.android.com/apk/res/android"{extra}\n'
+          '    android:width="{size}dp"\n    android:height="{size}dp"\n'
+          '    android:viewportWidth="108"\n    android:viewportHeight="108">\n'
+          '    <!-- {comment} Generated by tools/generate_launcher_icon.py. -->\n')
+
+
+def path(fill, d, alpha=1.0, stroke=None, indent="        "):
+    attrs = [f'android:pathData="{d}"']
+    if stroke is None:
+        attrs.insert(0, f'android:fillColor="{fill}"')
+        if alpha < 1:
+            attrs.append(f'android:fillAlpha="{alpha}"')
+    else:
+        attrs.insert(0, f'android:strokeColor="{fill}"')
+        attrs.append(f'android:strokeWidth="{stroke}"')
+    inner = f"\n{indent}    ".join(attrs)
+    return f"{indent}<path\n{indent}    {inner} />\n"
+
+
+def shifted(body, scale=1.0):
+    group = f'    <group\n        android:translateX="{DX}"\n        android:translateY="{DY}">\n{body}    </group>\n'
+    if scale == 1.0:
+        return group
+    # Scale around the center, then shift: the outer group scales, the inner one moves.
+    inner = "".join("    " + line + "\n" for line in group.rstrip("\n").split("\n"))
+    return (f'    <group\n        android:pivotX="54"\n        android:pivotY="54"\n'
+            f'        android:scaleX="{scale}"\n        android:scaleY="{scale}">\n{inner}    </group>\n')
+
+
+def background_xml():
+    return (HEADER.format(extra='\n    xmlns:aapt="http://schemas.android.com/aapt"', size=108,
+                          comment="Bright ice, lighter at the top.")
+            + '    <path android:pathData="M0,0H108V108H0Z">\n'
+            + '        <aapt:attr name="android:fillColor">\n'
+            + '            <gradient\n                android:type="linear"\n'
+            + '                android:startX="54"\n                android:startY="0"\n'
+            + '                android:endX="54"\n                android:endY="108"\n'
+            + f'                android:startColor="{ICE_TOP}"\n'
+            + f'                android:endColor="{ICE_BOTTOM}" />\n'
+            + '        </aapt:attr>\n    </path>\n</vector>\n')
+
+
+def foreground_xml():
+    body = "".join(path(f, d, a, s) for f, a, d, s in FOREGROUND)
+    return HEADER.format(extra="", size=108, comment="A puck sliding left, with speed lines.") + shifted(body) + "</vector>\n"
+
+
+def monochrome_xml():
+    body = "".join(path("#FFFFFFFF", d) for d in MONOCHROME)
+    return (HEADER.format(extra="", size=108, comment="Themed-icon layer: the puck and speed lines in one color.")
+            + shifted(body) + "</vector>\n")
+
+
+def notification_xml():
+    body = "".join(path("#FFFFFFFF", d, indent="            ") for d in MONOCHROME)
+    return (HEADER.format(extra="", size=24, comment="Status bar icon: the themed-icon silhouette, scaled to fill the frame.")
+            + shifted(body, scale=1.75) + "</vector>\n")
+
+
+def svg(mask):
+    shapes = "".join(
+        f'<path d="{d}" fill="none" stroke="{f}" stroke-width="{s}"/>' if s else f'<path d="{d}" fill="{f}" fill-opacity="{a}"/>'
+        for f, a, d, s in FOREGROUND)
+    clip = '<clipPath id="m"><circle cx="54" cy="54" r="36"/></clipPath>' if mask else ""
+    view = "18 18 72 72" if mask else "0 0 108 108"
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{view}" width="432" height="432"><defs>{clip}'
+            f'<linearGradient id="ice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{ICE_TOP}"/>'
+            f'<stop offset="1" stop-color="{ICE_BOTTOM}"/></linearGradient></defs>'
+            f'<g{" clip-path=\"url(#m)\"" if mask else ""}><rect width="108" height="108" fill="url(#ice)"/>'
+            f'<g transform="translate({DX} {DY})">{shapes}</g></g></svg>\n')
+
+
+def main():
+    res = sys.argv[1] if len(sys.argv) > 1 else "app/src/main/res"
+    check_safe_zone()
+    drawable = os.path.join(res, "drawable")
+    for name, content in [
+        ("ic_launcher_background.xml", background_xml()),
+        ("ic_launcher_foreground.xml", foreground_xml()),
+        ("ic_launcher_monochrome.xml", monochrome_xml()),
+        ("ic_notification.xml", notification_xml()),
+    ]:
+        with open(os.path.join(drawable, name), "w") as f:
+            f.write(content)
+    if len(sys.argv) > 2:
+        os.makedirs(sys.argv[2], exist_ok=True)
+        for name, mask in [("preview_circle.svg", True), ("preview_full.svg", False)]:
+            with open(os.path.join(sys.argv[2], name), "w") as f:
+                f.write(svg(mask))
+
+
+if __name__ == "__main__":
+    main()

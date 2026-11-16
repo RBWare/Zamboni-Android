@@ -1,5 +1,6 @@
 package io.rbware.zamboni.data.social
 
+import io.rbware.zamboni.data.logos.NhlLogos
 import io.rbware.zamboni.data.model.MastodonHandle
 import io.rbware.zamboni.data.model.SocialCategory
 import io.rbware.zamboni.data.model.SocialSource
@@ -17,57 +18,57 @@ import io.rbware.zamboni.data.model.YouTubeChannel
 object SocialSources {
     private val mastodon: List<SocialSource> = listOf(
         // On by default.
-        mastodon("@NHL@sportsbots.xyz", "NHL", SocialCategory.LEAGUE, on = true),
+        mastodon("@NHL@sportsbots.xyz", "NHL", SocialCategory.LEAGUE, on = true, logo = "NHL"),
         mastodon("@spittinchiclets@sportsbots.xyz", "Spittin' Chiclets", SocialCategory.MEDIA, on = true),
         mastodon("@Sportsnet@sportsbots.xyz", "Sportsnet", SocialCategory.MEDIA, on = true),
         mastodon("@TheAthleticNHL@sportsbots.xyz", "The Athletic NHL", SocialCategory.MEDIA, on = true),
         mastodon("@SleeperNHL@sportsbots.xyz", "SleeperNHL", SocialCategory.MEDIA, on = true),
-        mastodon("@NHLPlayerSafety@sportsbots.xyz", "NHL Player Safety", SocialCategory.OTHER, on = true),
-        mastodon("@NHLdotcom@sportsbots.xyz", "NHL.com", SocialCategory.MEDIA, on = true),
-        mastodon("@PR_NHL@sportsbots.xyz", "NHL Public Relations", SocialCategory.REPORTER, on = true),
-        mastodon("@NHLGIFs@sportsbots.xyz", "NHL GIFs", SocialCategory.MEDIA, on = true),
-        mastodon("@nhl@sportsfeed.me", "Sportsfeed NHL", SocialCategory.MEDIA, on = true),
+        mastodon("@NHLPlayerSafety@sportsbots.xyz", "NHL Player Safety", SocialCategory.OTHER, on = true, logo = "NHL"),
+        mastodon("@NHLdotcom@sportsbots.xyz", "NHL.com", SocialCategory.MEDIA, on = true, logo = "NHL"),
+        mastodon("@PR_NHL@sportsbots.xyz", "NHL Public Relations", SocialCategory.REPORTER, on = true, logo = "NHL"),
+        mastodon("@NHLGIFs@sportsbots.xyz", "NHL GIFs", SocialCategory.MEDIA, on = true, logo = "NHL"),
+        mastodon("@nhl@sportsfeed.me", "Sportsfeed NHL", SocialCategory.MEDIA, on = true, logo = "NHL"),
 
         // Off by default (sportsbots.xyz hockey roster, most followed first).
-        mastodon("@NHLBlackhawks@sportsbots.xyz", "Chicago Blackhawks", SocialCategory.TEAM),
-        mastodon("@MapleLeafs@sportsbots.xyz", "Toronto Maple Leafs", SocialCategory.TEAM),
-        mastodon("@penguins@sportsbots.xyz", "Pittsburgh Penguins", SocialCategory.TEAM),
-        mastodon("@NHLBruins@sportsbots.xyz", "Boston Bruins", SocialCategory.TEAM),
-        mastodon("@CanadiensMTL@sportsbots.xyz", "Canadiens Montréal", SocialCategory.TEAM),
-        mastodon("@NHLFlyers@sportsbots.xyz", "Philadelphia Flyers", SocialCategory.TEAM),
-        mastodon("@NYRangers@sportsbots.xyz", "New York Rangers", SocialCategory.TEAM),
+        mastodon("@NHLBlackhawks@sportsbots.xyz", "Chicago Blackhawks", SocialCategory.TEAM, logo = "CHI"),
+        mastodon("@MapleLeafs@sportsbots.xyz", "Toronto Maple Leafs", SocialCategory.TEAM, logo = "TOR"),
+        mastodon("@penguins@sportsbots.xyz", "Pittsburgh Penguins", SocialCategory.TEAM, logo = "PIT"),
+        mastodon("@NHLBruins@sportsbots.xyz", "Boston Bruins", SocialCategory.TEAM, logo = "BOS"),
+        mastodon("@CanadiensMTL@sportsbots.xyz", "Canadiens Montréal", SocialCategory.TEAM, logo = "MTL"),
+        mastodon("@NHLFlyers@sportsbots.xyz", "Philadelphia Flyers", SocialCategory.TEAM, logo = "PHI"),
+        mastodon("@NYRangers@sportsbots.xyz", "New York Rangers", SocialCategory.TEAM, logo = "NYR"),
         mastodon("@BizNasty2point0@sportsbots.xyz", "Paul Bissonnette", SocialCategory.PERSONALITY),
-        mastodon("@DetroitRedWings@sportsbots.xyz", "Detroit Red Wings", SocialCategory.TEAM),
-        mastodon("@LAKings@sportsbots.xyz", "LA Kings", SocialCategory.TEAM),
-        mastodon("@DallasStars@sportsbots.xyz", "Dallas Stars", SocialCategory.TEAM),
-        mastodon("@Canucks@sportsbots.xyz", "Vancouver Canucks", SocialCategory.TEAM),
-        mastodon("@EdmontonOilers@sportsbots.xyz", "Edmonton Oilers", SocialCategory.TEAM),
-        mastodon("@BuffaloSabres@sportsbots.xyz", "Buffalo Sabres", SocialCategory.TEAM),
+        mastodon("@DetroitRedWings@sportsbots.xyz", "Detroit Red Wings", SocialCategory.TEAM, logo = "DET"),
+        mastodon("@LAKings@sportsbots.xyz", "LA Kings", SocialCategory.TEAM, logo = "LAK"),
+        mastodon("@DallasStars@sportsbots.xyz", "Dallas Stars", SocialCategory.TEAM, logo = "DAL"),
+        mastodon("@Canucks@sportsbots.xyz", "Vancouver Canucks", SocialCategory.TEAM, logo = "VAN"),
+        mastodon("@EdmontonOilers@sportsbots.xyz", "Edmonton Oilers", SocialCategory.TEAM, logo = "EDM"),
+        mastodon("@BuffaloSabres@sportsbots.xyz", "Buffalo Sabres", SocialCategory.TEAM, logo = "BUF"),
         mastodon("@FriedgeHNIC@sportsbots.xyz", "Elliotte Friedman", SocialCategory.REPORTER),
         mastodon("@PierreVLeBrun@sportsbots.xyz", "Pierre LeBrun", SocialCategory.REPORTER),
-        mastodon("@TBLightning@sportsbots.xyz", "Tampa Bay Lightning", SocialCategory.TEAM),
+        mastodon("@TBLightning@sportsbots.xyz", "Tampa Bay Lightning", SocialCategory.TEAM, logo = "TBL"),
         mastodon("@tsnjamesduthie@sportsbots.xyz", "James Duthie", SocialCategory.REPORTER),
-        mastodon("@StLouisBlues@sportsbots.xyz", "St. Louis Blues", SocialCategory.TEAM),
-        mastodon("@SanJoseSharks@sportsbots.xyz", "San Jose Sharks", SocialCategory.TEAM),
-        mastodon("@Capitals@sportsbots.xyz", "Washington Capitals", SocialCategory.TEAM),
-        mastodon("@NJDevils@sportsbots.xyz", "New Jersey Devils", SocialCategory.TEAM),
-        mastodon("@mnwild@sportsbots.xyz", "Minnesota Wild", SocialCategory.TEAM),
-        mastodon("@NHLFlames@sportsbots.xyz", "Calgary Flames", SocialCategory.TEAM),
-        mastodon("@Avalanche@sportsbots.xyz", "Colorado Avalanche", SocialCategory.TEAM),
-        mastodon("@PredsNHL@sportsbots.xyz", "Nashville Predators", SocialCategory.TEAM),
-        mastodon("@AnaheimDucks@sportsbots.xyz", "Anaheim Ducks", SocialCategory.TEAM),
-        mastodon("@Senators@sportsbots.xyz", "Ottawa Senators", SocialCategory.TEAM),
-        mastodon("@NYIslanders@sportsbots.xyz", "New York Islanders", SocialCategory.TEAM),
-        mastodon("@NHLJets@sportsbots.xyz", "Winnipeg Jets", SocialCategory.TEAM),
-        mastodon("@Canes@sportsbots.xyz", "Carolina Hurricanes", SocialCategory.TEAM),
-        mastodon("@GoldenKnights@sportsbots.xyz", "Vegas Golden Knights", SocialCategory.TEAM),
-        mastodon("@BlueJacketsNHL@sportsbots.xyz", "Columbus Blue Jackets", SocialCategory.TEAM),
+        mastodon("@StLouisBlues@sportsbots.xyz", "St. Louis Blues", SocialCategory.TEAM, logo = "STL"),
+        mastodon("@SanJoseSharks@sportsbots.xyz", "San Jose Sharks", SocialCategory.TEAM, logo = "SJS"),
+        mastodon("@Capitals@sportsbots.xyz", "Washington Capitals", SocialCategory.TEAM, logo = "WSH"),
+        mastodon("@NJDevils@sportsbots.xyz", "New Jersey Devils", SocialCategory.TEAM, logo = "NJD"),
+        mastodon("@mnwild@sportsbots.xyz", "Minnesota Wild", SocialCategory.TEAM, logo = "MIN"),
+        mastodon("@NHLFlames@sportsbots.xyz", "Calgary Flames", SocialCategory.TEAM, logo = "CGY"),
+        mastodon("@Avalanche@sportsbots.xyz", "Colorado Avalanche", SocialCategory.TEAM, logo = "COL"),
+        mastodon("@PredsNHL@sportsbots.xyz", "Nashville Predators", SocialCategory.TEAM, logo = "NSH"),
+        mastodon("@AnaheimDucks@sportsbots.xyz", "Anaheim Ducks", SocialCategory.TEAM, logo = "ANA"),
+        mastodon("@Senators@sportsbots.xyz", "Ottawa Senators", SocialCategory.TEAM, logo = "OTT"),
+        mastodon("@NYIslanders@sportsbots.xyz", "New York Islanders", SocialCategory.TEAM, logo = "NYI"),
+        mastodon("@NHLJets@sportsbots.xyz", "Winnipeg Jets", SocialCategory.TEAM, logo = "WPG"),
+        mastodon("@Canes@sportsbots.xyz", "Carolina Hurricanes", SocialCategory.TEAM, logo = "CAR"),
+        mastodon("@GoldenKnights@sportsbots.xyz", "Vegas Golden Knights", SocialCategory.TEAM, logo = "VGK"),
+        mastodon("@BlueJacketsNHL@sportsbots.xyz", "Columbus Blue Jackets", SocialCategory.TEAM, logo = "CBJ"),
         mastodon("@ryanwhitney6@sportsbots.xyz", "Ryan Whitney", SocialCategory.PERSONALITY),
-        mastodon("@FlaPanthers@sportsbots.xyz", "Florida Panthers", SocialCategory.TEAM),
-        mastodon("@ArizonaCoyotes@sportsbots.xyz", "Arizona Coyotes", SocialCategory.TEAM),
+        mastodon("@FlaPanthers@sportsbots.xyz", "Florida Panthers", SocialCategory.TEAM, logo = "FLA"),
+        mastodon("@ArizonaCoyotes@sportsbots.xyz", "Arizona Coyotes", SocialCategory.TEAM, logo = "ARI"),
         mastodon("@GrittyNHL@sportsbots.xyz", "Gritty", SocialCategory.PERSONALITY),
         mastodon("@KevinWeekes@sportsbots.xyz", "Kevin Weekes", SocialCategory.MEDIA),
-        mastodon("@SeattleKraken@sportsbots.xyz", "Seattle Kraken", SocialCategory.TEAM),
+        mastodon("@SeattleKraken@sportsbots.xyz", "Seattle Kraken", SocialCategory.TEAM, logo = "SEA"),
         mastodon("@rayferraro21@sportsbots.xyz", "Ray Ferraro", SocialCategory.REPORTER),
         mastodon("@Burkie2020@sportsbots.xyz", "Brian Burke", SocialCategory.PERSONALITY),
         mastodon("@CapFriendly@sportsbots.xyz", "CapFriendly", SocialCategory.REPORTER),
@@ -198,9 +199,11 @@ object SocialSources {
 
     val defaults: List<SocialSource> = mastodon + youtube
 
-    private fun mastodon(handle: String, name: String, category: SocialCategory, on: Boolean = false): SocialSource =
+    /** @param logo NHL team code (or "NHL") whose logo stands in when the account's picture won't load. */
+    private fun mastodon(handle: String, name: String, category: SocialCategory, on: Boolean = false, logo: String? = null): SocialSource =
         requireNotNull(MastodonHandle.parse(handle)) { "Bad Mastodon handle: $handle" }
             .toSource(name, isDefault = true, enabledByDefault = on, category = category)
+            .copy(fallbackAvatarUrl = logo?.let { NhlLogos.forTeam(it).light })
 
     private fun youtube(channelId: String, handle: String?, name: String, category: SocialCategory, on: Boolean = false): SocialSource {
         require(YouTubeChannel.CHANNEL_ID.matches(channelId)) { "Bad YouTube channel ID: $channelId" }

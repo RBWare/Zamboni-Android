@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -75,14 +77,11 @@ fun PostCard(post: SocialPost, onClick: () -> Unit, modifier: Modifier = Modifie
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = post.authorAvatarUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                Avatar(
+                    pictureUrl = post.authorAvatarUrl,
+                    // The stand-in (e.g. a team logo) belongs to the followed account, so not for boosts.
+                    fallbackUrl = post.source.fallbackAvatarUrl.takeUnless { post.isBoost },
+                    name = post.authorName,
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -224,3 +223,43 @@ private fun VideoCard(post: SocialPost, onClick: () -> Unit, modifier: Modifier 
 /** "1.2K", "3.4M": compact, locale-aware counts. */
 private fun formatCount(value: Long): String =
     CompactDecimalFormat.getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT).format(value)
+
+/**
+ * A round author picture. Tries [pictureUrl], then [fallbackUrl] (a logo, shown whole on a plain
+ * circle), and shows the name's first letter while loading or when neither loads.
+ */
+@Composable
+private fun Avatar(pictureUrl: String?, fallbackUrl: String?, name: String) {
+    val urls = remember(pictureUrl, fallbackUrl) { listOfNotNull(pictureUrl, fallbackUrl).distinct() }
+    var index by remember(urls) { mutableIntStateOf(0) }
+    var loaded by remember(urls, index) { mutableStateOf(false) }
+    val url = urls.getOrNull(index)
+    val isLogo = url != null && url == fallbackUrl && url != pictureUrl
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(if (isLogo && loaded) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        if (!loaded) {
+            Text(
+                name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+        if (url != null) {
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                contentScale = if (isLogo) ContentScale.Fit else ContentScale.Crop,
+                onSuccess = { loaded = true },
+                onError = { index++ },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (isLogo) 4.dp else 0.dp),
+            )
+        }
+    }
+}

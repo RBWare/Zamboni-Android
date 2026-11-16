@@ -86,6 +86,14 @@ class MastodonTest {
         assertEquals("", mastodonHtmlToText(""))
     }
 
+    @Test
+    fun html_dropsTwitterDomainFromMirroredMentions() {
+        val html = """<p>Here are <span class="h-card"><a href="https://twitter.com/EmmySadler" class="u-url mention">""" +
+            """@<span>EmmySadler@twitter.com</span></a></span>'s takeaways. cc @NHL@x.com, email news@x.com</p>"""
+        assertEquals("Here are @EmmySadler's takeaways. cc @NHL, email news@x.com", mastodonHtmlToText(html))
+        assertEquals("@nhl@mastodon.social", mastodonHtmlToText("<p>@nhl@mastodon.social</p>"))
+    }
+
     // Mapping
 
     private val source = MastodonHandle("team", "hockey.social").toSource("Team", isDefault = true)

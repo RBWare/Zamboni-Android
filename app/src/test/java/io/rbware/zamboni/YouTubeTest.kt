@@ -6,7 +6,9 @@ import io.rbware.zamboni.data.social.YouTubeChannelInput
 import io.rbware.zamboni.data.social.cleanDisplayName
 import io.rbware.zamboni.data.social.parseChannelPage
 import io.rbware.zamboni.data.social.parseYouTubeFeed
-import io.rbware.zamboni.data.social.parseYouTubeFeedInfo
+import io.rbware.zamboni.data.social.parseChannelVideosPage
+import io.rbware.zamboni.data.social.parseRelativeAge
+import io.rbware.zamboni.data.social.parseViewCount
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -128,11 +130,6 @@ class YouTubeTest {
     private val source = YouTubeChannel(nhlId, "@NHL").toSource("NHL", isDefault = true)
 
     @Test
-    fun feed_channelTitle() {
-        assertEquals("NHL", parseYouTubeFeedInfo(feed).title)
-    }
-
-    @Test
     fun feed_videosNewestFirst() {
         val videos = parseYouTubeFeed(feed, source)
         assertEquals(listOf("YYGMjMiKTvM", "OMaIWDPApVM"), videos.map { it.id.substringAfterLast(':') })
@@ -158,6 +155,65 @@ class YouTubeTest {
         assertTrue(short.isShort)
         assertEquals("https://i.ytimg.com/vi/YYGMjMiKTvM/hqdefault.jpg", short.imageUrl)
         assertEquals(88437L, short.views)
+    }
+
+    // Videos page (used while the feeds are down); shaped like the real page data.
+
+    private val now = Instant.parse("2026-11-15T23:00:00Z")
+
+    private fun lockup(id: String, title: String, vararg labels: String, type: String = "LOCKUP_CONTENT_TYPE_VIDEO") =
+        """{"richItemRenderer":{"content":{"lockupViewModel":{"contentId":"$id","contentType":"$type",
+          "metadata":{"lockupMetadataViewModel":{"title":{"content":"$title"},
+          "metadata":{"contentMetadataViewModel":{"metadataRows":[{"metadataParts":[""" +
+            labels.joinToString(",") { """{"text":{"content":"x"},"accessibilityLabel":"$it"}""" } +
+            """]}]}}}}}}}}"""
+
+    private val videosPage = """
+        <html><script>var ytInitialData = {"metadata":{"channelMetadataRenderer":{"title":"NHL"}},
+        "contents":{"tabs":[{"richGridRenderer":{"contents":[
+        ${lockup("OMaIWDPApVM", "Flames vs. Kings", "27 thousand views", "17 hours ago")},
+        ${lockup("eshE96_xi4k", "Goalies talk", "NHL", "and 3 more", "1.2 million views", "2 days ago")},
+        ${lockup("PLx", "A playlist", "3 days ago", type = "LOCKUP_CONTENT_TYPE_PLAYLIST")},
+        ${lockup("0ZscgJdu6KA", "Sharks score twice", "No views", "Streamed 20 minutes ago")}
+        ]}}]}};</script></html>
+    """.trimIndent()
+
+    @Test
+    fun videosPage_readsVideosNewestFirst() {
+        val videos = parseChannelVideosPage(videosPage, source, now)!!
+        assertEquals(listOf("0ZscgJdu6KA", "OMaIWDPApVM", "eshE96_xi4k"), videos.map { it.id.substringAfterLast(':') })
+        val video = videos[1]
+        assertEquals("Flames vs. Kings", video.title)
+        assertEquals("NHL", video.authorName)
+        assertEquals("https://www.youtube.com/watch?v=OMaIWDPApVM", video.url)
+        assertEquals("https://i.ytimg.com/vi/OMaIWDPApVM/hqdefault.jpg", video.imageUrl)
+        assertEquals(27_000L, video.views)
+        assertEquals(Instant.parse("2026-11-15T06:00:00Z"), video.publishedAt)
+        assertEquals(1_200_000L, videos[2].views)
+        assertEquals(0L, videos[0].views)
+    }
+
+    @Test
+    fun videosPage_readsDataEmbeddedAsJsString() {
+        val json = videosPage.substringAfter("var ytInitialData = ").substringBefore(";</script>")
+        // The way YouTube writes it as a string: quotes and other symbols as \xHH escapes.
+        val escaped = json.replace("\\", "\\\\").replace("\"", "\\x22").replace("'", "\\x27").replace("&", "\\x26")
+        val page = "<html><script>var ytInitialData = '$escaped';</script></html>"
+        assertEquals(3, parseChannelVideosPage(page, source, now)!!.size)
+    }
+
+    @Test
+    fun videosPage_withoutDataIsNull() {
+        assertNull(parseChannelVideosPage("<html>Sorry</html>", source, now))
+    }
+
+    @Test
+    fun relativeAgeAndViews() {
+        assertEquals(Instant.parse("2026-11-08T23:00:00Z"), parseRelativeAge("1 week ago", now))
+        assertNull(parseRelativeAge("Premieres tomorrow", now))
+        assertEquals(843L, parseViewCount("843 views"))
+        assertEquals(1L, parseViewCount("1 view"))
+        assertNull(parseViewCount("and 3 more"))
     }
 
     // Names

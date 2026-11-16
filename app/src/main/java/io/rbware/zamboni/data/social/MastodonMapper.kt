@@ -58,8 +58,16 @@ fun mastodonHtmlToText(html: String): String {
         .lines()
         .joinToString("\n") { it.trim() }
         .replace(Regex("\n{3,}"), "\n\n")
+        .replace(MIRRORED_MENTION, "$1")
         .trim()
 }
+
+/**
+ * Mentions in posts mirrored from Twitter (e.g. by sportsbots.xyz) come through as
+ * "@EmmySadler@twitter.com"; they read as plain "@EmmySadler". Not touched when the "@" is part
+ * of a word, as in an email address like news@x.com.
+ */
+private val MIRRORED_MENTION = Regex("""(?<![\w@])(@\w{1,15})@(?:twitter|x)\.com\b""", RegexOption.IGNORE_CASE)
 
 // Placeholders that survive Jsoup's whitespace normalization in text().
 private const val LINE_BREAK = " "

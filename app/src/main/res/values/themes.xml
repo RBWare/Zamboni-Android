@@ -5,7 +5,7 @@
     <style name="Theme.Zamboni.Starting" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <!-- The icon art has white parts, so give it its launcher-blue circle. -->
+        <!-- Show the puck on its circle of ice, as on the launcher. -->
         <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Zamboni</item>
     </style>

@@ -1,29 +1,38 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 1.0.0. Scores for the NHL and NAHL, hockey news from several feeds, and favorite teams.
+Version 1.0.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
+Mastodon accounts and YouTube channels, game and news alerts, and favorite teams.
 
 ## Screenshots
 
 ### Phone
 
-| Scores | Game details | News | About |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/phone_scores.png" width="200" alt="Scores list"> | <img src="docs/screenshots/phone_game.png" width="200" alt="Game details"> | <img src="docs/screenshots/phone_news.png" width="200" alt="News feed"> | <img src="docs/screenshots/phone_about.png" width="200" alt="About screen"> |
+| Scores | Game details | News |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/phone_scores.png" width="240" alt="Scores list with final scores"> | <img src="docs/screenshots/phone_game.png" width="240" alt="Game details with scoring by period"> | <img src="docs/screenshots/phone_news.png" width="240" alt="News feed"> |
+
+| Social | Settings | About |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/phone_social.png" width="240" alt="Social feed of Mastodon posts and YouTube videos"> | <img src="docs/screenshots/phone_settings.png" width="240" alt="Settings"> | <img src="docs/screenshots/phone_about.png" width="240" alt="About screen"> |
 
 ### Foldable (unfolded)
 
-On a wide screen the scores fill the screen in two columns; opening a game slides its details
-in beside the list (closed with the X or back). Settings show the section being edited beside
-the list.
+On a wide screen the scores, news and social feeds fill the screen in two columns; opening a
+game slides its details in beside the list (closed with the X or back). Settings show the
+section being edited beside the list.
 
 | Scores | Game details |
 | :---: | :---: |
 | <img src="docs/screenshots/foldable_scores.png" width="400" alt="Scores in two columns"> | <img src="docs/screenshots/foldable_game.png" width="400" alt="Scores with game details beside them"> |
 
-| News | Settings |
+| News | Social |
 | :---: | :---: |
-| <img src="docs/screenshots/foldable_news.png" width="400" alt="News in two columns"> | <img src="docs/screenshots/foldable_settings.png" width="400" alt="Settings with favorite teams beside them"> |
+| <img src="docs/screenshots/foldable_news.png" width="400" alt="News in two columns"> | <img src="docs/screenshots/foldable_social.png" width="400" alt="Social feed in two columns"> |
+
+| Settings: favorite teams | Settings: social accounts |
+| :---: | :---: |
+| <img src="docs/screenshots/foldable_settings.png" width="400" alt="Settings with favorite teams beside them"> | <img src="docs/screenshots/foldable_settings_social.png" width="400" alt="Settings with social accounts beside them"> |
 
 ## Stack
 - Kotlin 2.3, AGP 8.13, Gradle 8.13, JDK 17 target
@@ -55,7 +64,7 @@ app/src/main/java/io/rbware/zamboni/
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
 Also: `docs/screenshots/` (README images) and `tools/generate_launcher_icon.py` (draws the
-launcher icon vectors).
+launcher icon, its themed layer and the notification icon).
 
 ## Adding a news source
 Add one line to `data/news/NewsSources.kt`:

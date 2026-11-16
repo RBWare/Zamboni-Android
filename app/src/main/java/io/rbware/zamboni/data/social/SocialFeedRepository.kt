@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import java.util.concurrent.ConcurrentHashMap
 
 /** Posts from several sources, plus any sources that couldn't be loaded. */
 data class SocialFeed(
@@ -22,6 +23,9 @@ data class SocialFeed(
 /** Loads recent posts for each source from its platform. */
 class SocialFeedRepository(private val mastodon: MastodonClient, private val youtube: YouTubeClient) {
 
+    /** Each source's last successful result, shown again if a later refresh of it fails. */
+    private val lastGood = ConcurrentHashMap<String, List<SocialPost>>()
+
     /** Fetches all [sources] in parallel. One failing source doesn't fail the others. */
     suspend fun getPosts(sources: List<SocialSource>): SocialFeed = coroutineScope {
         // Many accounts share one server (e.g. sportsbots.xyz); don't hit it with all at once.
@@ -29,12 +33,15 @@ class SocialFeedRepository(private val mastodon: MastodonClient, private val you
         val results = sources.map { source ->
             async {
                 source to try {
-                    Result.success(limit.withPermit { fetch(source) })
+                    val posts = limit.withPermit { fetch(source) }
+                    lastGood[source.id] = posts
+                    Result.success(posts)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to load ${source.handle}: $e")
-                    Result.failure(e)
+                    // Older posts beat an empty spot, and aren't worth an error message.
+                    lastGood[source.id]?.let { Result.success(it) } ?: Result.failure(e)
                 }
             }
         }.awaitAll()

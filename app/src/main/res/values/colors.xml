@@ -1,4 +1,5 @@
 <resources>
-    <color name="ic_launcher_background">#4A9FE8</color>
+    <!-- Behind the icon on the splash screen; the middle of the icon's ice gradient. -->
+    <color name="ic_launcher_background">#DCEAF9</color>
     <color name="splash_background">#F8F9FF</color>
 </resources>

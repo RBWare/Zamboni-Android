@@ -44,6 +44,16 @@ class SocialSourcesTest {
     }
 
     @Test
+    fun defaults_nhlTeamAccountsHaveLogoFallback() {
+        val teams = SocialSources.defaults.filter {
+            it.platform == SocialPlatform.MASTODON && it.category == SocialCategory.TEAM && it.fallbackAvatarUrl != null
+        }
+        assertEquals(32, teams.size)
+        val dallas = SocialSources.defaults.first { it.handle == "@DallasStars@sportsbots.xyz" }
+        assertEquals("https://assets.nhle.com/logos/nhl/svg/DAL_light.svg", dallas.fallbackAvatarUrl)
+    }
+
+    @Test
     fun defaults_youTubeHasNhlOnAndAll32Teams() {
         val youtube = SocialSources.defaults.filter { it.platform == SocialPlatform.YOUTUBE }
         assertEquals(listOf("NHL"), youtube.filter { it.enabledByDefault }.map { it.name })

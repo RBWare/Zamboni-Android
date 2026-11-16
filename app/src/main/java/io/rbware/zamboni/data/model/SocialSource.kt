@@ -20,6 +20,11 @@ data class SocialSource(
     val enabledByDefault: Boolean = true,
     /** For grouping long lists of built-in accounts; null for user-added ones. */
     val category: SocialCategory? = null,
+    /**
+     * Shown when the account's own picture is missing or fails to load (e.g. a team's logo for a
+     * mirror whose copied profile picture has since been deleted). Built-in accounts only.
+     */
+    val fallbackAvatarUrl: String? = null,
 )
 
 /** Kinds of built-in accounts, in the order they're listed. */

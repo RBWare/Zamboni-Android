@@ -201,6 +201,7 @@
     <string name="social_no_posts">No posts right now</string>
     <string name="social_load_failed">Couldn\'t load posts</string>
     <string name="social_sources_failed">Couldn\'t load: %1$s</string>
+    <string name="social_many_sources_failed">Couldn\'t load %1$d accounts. Pull down to try again.</string>
     <string name="social_all_sources">All accounts</string>
     <string name="social_boosted">%1$s boosted</string>
     <string name="social_content_warning">Content warning: %1$s</string>

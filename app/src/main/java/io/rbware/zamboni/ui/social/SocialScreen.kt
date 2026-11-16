@@ -100,7 +100,12 @@ fun SocialScreen(
         onPauseOrDispose { }
     }
 
-    val failedMessage = stringResource(R.string.social_sources_failed, state.failedSources.joinToString(", ") { it.name })
+    // Name a few failed accounts; past that, a list of names would fill the snackbar.
+    val failedMessage = if (state.failedSources.size > 3) {
+        stringResource(R.string.social_many_sources_failed, state.failedSources.size)
+    } else {
+        stringResource(R.string.social_sources_failed, state.failedSources.joinToString(", ") { it.name })
+    }
     LaunchedEffect(state.failedSources) {
         if (state.failedSources.isNotEmpty()) {
             snackbarHostState.showSnackbar(failedMessage)
