@@ -1,7 +1,7 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 2.2.0. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
+Version 2.2.1. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
 Mastodon accounts and YouTube channels, game and news alerts, Live Updates and team radio for
 your favorite teams.
 
@@ -109,8 +109,7 @@ app/src/main/java/io/rbware/zamboni/
     |-- settings/                # Settings tab: onboarding choices, Gamesheet key and About
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
-Also: `docs/screenshots/` (README images) and `tools/generate_launcher_icon.py` (draws the
-launcher icon, its themed layer and the notification icon).
+Also: `docs/screenshots/` (README images).
 
 ## Adding a news source
 Add one line to `data/news/NewsSources.kt`:

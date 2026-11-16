@@ -15,6 +15,10 @@ import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.scores.GameNotFoundException
 import io.rbware.zamboni.data.scores.ScoresRepository
 import io.rbware.zamboni.notifications.NotificationChecker
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,8 +29,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 enum class GameDetailError { NOT_FOUND, LOAD_FAILED }
 
@@ -94,6 +96,14 @@ class GameDetailViewModel(
     private val _uiState = MutableStateFlow(GameDetailUiState())
     val uiState: StateFlow<GameDetailUiState> = _uiState.asStateFlow()
     private var loadJob: Job? = null
+    private var lastLoadStarted: TimeMark? = null
+
+    /**
+     * How long until the next refresh is due, if they come every [interval]: zero when the last
+     * one is already that old (e.g. back on screen after a while in the background).
+     */
+    fun untilNextRefresh(interval: Duration): Duration =
+        lastLoadStarted?.let { (interval - it.elapsedNow()).coerceAtLeast(Duration.ZERO) } ?: interval
 
     /** Switches to [gameId] (null clears). Does nothing if it is already shown. */
     fun show(gameId: String?) {
@@ -117,6 +127,7 @@ class GameDetailViewModel(
 
     private fun load(gameId: String, userInitiated: Boolean) {
         loadJob?.cancel()
+        lastLoadStarted = TimeSource.Monotonic.markNow()
         _uiState.update {
             if (userInitiated) it.copy(isRefreshing = true, error = if (it.details == null) null else it.error) else it
         }

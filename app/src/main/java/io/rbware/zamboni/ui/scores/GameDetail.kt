@@ -131,7 +131,14 @@ fun GameDetail(
     // Ignore state that still belongs to the previously shown game.
     val current = state.takeIf { it.gameId == gameId }
     val details = current?.details
-    val game = (details?.game ?: listGame)?.let { game ->
+    // The list can have a newer score than the details (e.g. right after coming back to the
+    // app): show whichever snapshot of the score and clock is newer.
+    val newest = details?.game?.let { fromDetails ->
+        listGame?.updatedWith(fromDetails)?.let { merged ->
+            fromDetails.copy(status = merged.status, awayScore = merged.awayScore, homeScore = merged.homeScore)
+        } ?: fromDetails
+    } ?: listGame
+    val game = newest?.let { game ->
         game.copy(
             awayRecord = game.awayRecord ?: listGame?.awayRecord,
             homeRecord = game.homeRecord ?: listGame?.homeRecord,
@@ -142,13 +149,15 @@ fun GameDetail(
     LaunchedEffect(details?.game) { details?.game?.let(onGameLoaded) }
 
     // Live updates while visible, on the API's suggested interval. Restarts after every load.
+    // Coming back to the app (e.g. from the Live Update) refreshes at once if the details are
+    // older than the interval, instead of showing them for a whole interval more.
     val lifecycleOwner = LocalLifecycleOwner.current
     val autoRefreshInterval = current?.autoRefreshInterval
     LaunchedEffect(autoRefreshInterval, gameId, details) {
         if (autoRefreshInterval == null) return@LaunchedEffect
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
-                delay(autoRefreshInterval)
+                delay(viewModel.untilNextRefresh(autoRefreshInterval))
                 viewModel.refreshSilently()
             }
         }

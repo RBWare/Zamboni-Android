@@ -21,6 +21,11 @@ import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.model.goalAtScore
+import java.time.Duration
+import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +35,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.Duration
-import java.time.Instant
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 /**
  * How a notification check hands off to Live Updates. Separate from Android so the checker
@@ -258,7 +259,11 @@ class LiveGameService : Service() {
         return try {
             val details = container.scoresRepository.getGameDetails(game.id)
             refreshes[game.id] = details.suggestedRefresh?.toJavaDuration()
-            LiveGame(game.updatedWith(details.game), details.goals.lastOrNull())
+            val shown = game.updatedWith(details.game)
+            // Only the goal that made the score shown: the details can lag the score, and their
+            // newest goal would then be an earlier one.
+            val lastGoal = details.goals.goalAtScore(shown.awayScore ?: 0, shown.homeScore ?: 0)
+            LiveGame(shown, lastGoal)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

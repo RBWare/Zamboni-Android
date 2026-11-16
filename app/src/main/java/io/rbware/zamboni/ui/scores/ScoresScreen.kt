@@ -118,14 +118,15 @@ fun ScoresScreen(
     BackHandler(enabled = selectedGameId != null) { selectedGameId = null }
 
     // Live updates: re-fetch on the API's suggested interval, only while the screen is visible.
-    // Restarts after each response, since the API returns a fresh interval every time.
+    // Restarts after each response, since the API returns a fresh interval every time. Coming
+    // back to the app refreshes at once if the list is older than the interval.
     val lifecycleOwner = LocalLifecycleOwner.current
     val autoRefreshInterval = state.autoRefreshInterval
     LaunchedEffect(autoRefreshInterval, state.date, state.loadCount) {
         if (autoRefreshInterval == null) return@LaunchedEffect
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
-                delay(autoRefreshInterval)
+                delay(viewModel.untilNextRefresh(autoRefreshInterval))
                 viewModel.refreshSilently()
             }
         }

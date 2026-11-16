@@ -57,6 +57,14 @@ data class Goal(
 
 enum class GoalStrength { EVEN, POWER_PLAY, SHORTHANDED }
 
+/**
+ * The goal that made the score [awayScore]-[homeScore], or null if these goals don't include it
+ * yet. Game details can lag a few seconds behind the score, so the newest goal in them isn't
+ * always the one that was just scored.
+ */
+fun List<Goal>.goalAtScore(awayScore: Int, homeScore: Int): Goal? =
+    lastOrNull { it.awayScore == awayScore && it.homeScore == homeScore }
+
 data class GoalPlayer(
     val id: Long,
     val name: String,

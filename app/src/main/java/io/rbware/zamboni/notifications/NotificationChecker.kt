@@ -5,14 +5,21 @@ import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.NewsArticle
 import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.model.goalAtScore
 import io.rbware.zamboni.data.news.NewsRepository
 import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.preferences.UserPreferences
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
 import io.rbware.zamboni.data.teams.TeamRepository
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -20,11 +27,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 /**
  * One background check: fetches the favorite teams' games (and news, when due), compares them
@@ -190,18 +192,32 @@ class NotificationChecker(
         return games.filter { it.involvesAny(favorites) }.distinctBy { it.id } to anyFailed
     }
 
-    /** The scorer of the newest goal by the side that scored, if the source reports it. */
+    /**
+     * Who scored the goal that made the game's current score, if the source reports it. The
+     * details can lag the score by a few seconds, so the goal is matched by the score it made
+     * (not just the newest goal, which may be an earlier one) and the details are fetched again
+     * briefly if it's missing. If it still isn't there, the alert goes out without a name rather
+     * than with the wrong one.
+     */
     private suspend fun latestScorer(event: GameEvent.Scored): GoalPlayer? {
         val side = event.side ?: return null
-        return try {
-            scoresRepository.getGameDetails(event.game.id).goals.lastOrNull { it.side == side }?.scorer
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // The alert still goes out, just without the scorer's name.
-            Log.w(TAG, "Couldn't load goal details for ${event.game.id}: $e")
-            null
+        val away = event.game.awayScore ?: return null
+        val home = event.game.homeScore ?: return null
+        repeat(SCORER_ATTEMPTS) { attempt ->
+            if (attempt > 0) delay(SCORER_RETRY_DELAY.toMillis())
+            try {
+                val goal = scoresRepository.getGameDetails(event.game.id).goals.goalAtScore(away, home)
+                if (goal != null) return goal.scorer.takeIf { goal.side == side }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The alert still goes out, just without the scorer's name.
+                Log.w(TAG, "Couldn't load goal details for ${event.game.id}: $e")
+                return null
+            }
         }
+        Log.i(TAG, "Goal details for ${event.game.id} don't have the $away-$home goal yet")
+        return null
     }
 
     private class NewsResult(val alerts: List<NewsArticle>, val applyTo: (NotificationState) -> NotificationState)
@@ -273,6 +289,10 @@ class NotificationChecker(
 
     companion object {
         private const val TAG = "NotificationChecker"
+
+        /** Tries at loading the goal's details (the first and two retries): about 10 seconds, the details' cache time. */
+        private const val SCORER_ATTEMPTS = 3
+        private val SCORER_RETRY_DELAY: Duration = Duration.ofSeconds(5)
 
         private val GAME_TYPES = setOf(
             NotificationType.GAME_START,

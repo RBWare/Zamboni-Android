@@ -15,6 +15,11 @@ import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.preferences.ScoresFilter
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
+import java.time.LocalDate
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -31,9 +36,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 data class ScoresUiState(
     val date: LocalDate,
@@ -183,9 +185,19 @@ class ScoresViewModel(
         userPreferencesRepository.clearScoresFilters()
     }
 
+    private var lastLoadStarted: TimeMark? = null
+
+    /**
+     * How long until the next refresh is due, if they come every [interval]: zero when the last
+     * one is already that old (e.g. back on screen after a while in the background).
+     */
+    fun untilNextRefresh(interval: Duration): Duration =
+        lastLoadStarted?.let { (interval - it.elapsedNow()).coerceAtLeast(Duration.ZERO) } ?: interval
+
     private fun load(clearExisting: Boolean, silent: Boolean = false) {
         val date = selectedDate.value
         loadJob?.cancel()
+        lastLoadStarted = TimeSource.Monotonic.markNow()
         gamesLoad.update { current ->
             when {
                 clearExisting -> GamesLoad(isLoading = true)
