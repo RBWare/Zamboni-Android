@@ -87,14 +87,15 @@ import io.rbware.zamboni.data.model.TeamStat
 import io.rbware.zamboni.data.model.TeamStatType
 import io.rbware.zamboni.data.scores.BroadcastNames
 import io.rbware.zamboni.radio.LocalRadioPlayer
+import io.rbware.zamboni.radio.RadioArtwork
 import io.rbware.zamboni.radio.RadioPlayer
 import io.rbware.zamboni.radio.radioMediaId
 import io.rbware.zamboni.ui.LocalShownGame
 import io.rbware.zamboni.ui.components.TeamBadge
-import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 
 private val MaxContentWidth = 640.dp
 private val HeaderLogoSize = 64.dp
@@ -702,7 +703,14 @@ private fun RadioRow(stream: RadioStream, team: Team, game: Game, player: RadioP
                     when {
                         playing -> player.stop()
                         paused -> player.resume()
-                        else -> player.play(mediaId, stream.url, title, subtitle, team.logo?.forTheme(darkTheme = false))
+                        else -> player.play(
+                            mediaId,
+                            stream.url,
+                            title,
+                            subtitle,
+                            artworkUrl = team.logo?.forTheme(darkTheme = false),
+                            artwork = RadioArtwork(logoUrl = team.logo?.dark, color = team.colors?.primary),
+                        )
                     }
                 },
             ) {
