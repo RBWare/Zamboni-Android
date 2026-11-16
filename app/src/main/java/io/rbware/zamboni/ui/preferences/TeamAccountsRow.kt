@@ -53,6 +53,7 @@ fun TeamAccountsRow(
     favoriteTeamIds: Set<String>,
     isEnabled: (SocialSource) -> Boolean,
     onToggleTeam: (List<SocialSource>) -> Unit,
+    hint: Int = R.string.social_teams_hint,
 ) {
     val accountsByTeam = remember(sources, teams, favoriteTeamIds) {
         val byCode = sources.filter { it.isDefault && it.teamCode != null }.groupBy { it.teamCode }
@@ -69,7 +70,7 @@ fun TeamAccountsRow(
             modifier = Modifier.padding(horizontal = GroupedListHorizontalPadding + 16.dp),
         )
         Text(
-            stringResource(R.string.social_teams_hint),
+            stringResource(hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = GroupedListHorizontalPadding + 16.dp),

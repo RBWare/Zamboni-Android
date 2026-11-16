@@ -207,6 +207,7 @@
     <string name="social_content_warning">Content warning: %1$s</string>
     <string name="social_teams_title">Teams</string>
     <string name="social_teams_hint">Tap a team to turn on all its accounts. Tap again to turn them off.</string>
+    <string name="social_teams_hint_empty">Tap a team to follow all its accounts.</string>
     <string name="social_team_all_on">all on</string>
     <string name="social_team_some_on">some on</string>
     <string name="social_team_off">off</string>

@@ -350,6 +350,7 @@ private fun NoSourcesState(state: SocialUiState, onToggleTeam: (List<SocialSourc
             // Nothing is on here, so every team starts off.
             isEnabled = { false },
             onToggleTeam = onToggleTeam,
+            hint = R.string.social_teams_hint_empty,
         )
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = onOpenSettings) { Text(stringResource(R.string.social_choose_sources)) }
