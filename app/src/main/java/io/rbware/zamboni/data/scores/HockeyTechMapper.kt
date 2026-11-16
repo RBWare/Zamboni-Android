@@ -1,6 +1,5 @@
 package io.rbware.zamboni.data.scores
 
-import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.model.Broadcast
 import io.rbware.zamboni.data.model.BroadcastMarket
 import io.rbware.zamboni.data.model.Decision
@@ -32,49 +31,28 @@ import java.util.Locale
 import kotlin.time.Duration
 
 /*
- * Converts HockeyTech feed responses into app models for the AHL.
+ * Converts HockeyTech feed responses into app models for one HockeyTechLeague (AHL, SPHL).
  */
-
-private const val AHL_GAME_ID_PREFIX = "ahl-"
 
 /**
- * App-wide team ID for an AHL team, from its code: "BEL" -> "ahl-bel", like NHL teams. The
- * placeholder list of early versions used a few other codes; see AhlTeamIdMigration.
+ * The 500px logo. Files are named by the feed's numeric team ID, sometimes with a season
+ * ("373_94.png") and not always as PNG, so a URL from the feed is preferred: [known] (team list
+ * or game summary), else the 50px one from the scores bar, else a guess from the ID.
  */
-fun ahlTeamId(code: String): String = "${Leagues.AHL.id}-${code.lowercase(Locale.ROOT)}"
-
-/** App-wide game ID, e.g. "ahl-1029321". HockeyTech game IDs are unique across seasons. */
-fun ahlGameId(gameId: String): String = "$AHL_GAME_ID_PREFIX$gameId"
-
-/** The HockeyTech game ID behind an app game ID, or null if it isn't an AHL one. */
-fun parseAhlGameId(gameId: String): String? =
-    gameId.takeIf { it.startsWith(AHL_GAME_ID_PREFIX) }
-        ?.removePrefix(AHL_GAME_ID_PREFIX)
-        ?.takeIf { it.isNotEmpty() && it.all(Char::isDigit) }
-
-fun isAhlGameId(gameId: String): Boolean = parseAhlGameId(gameId) != null
-
-/**
- * The 500px logo. Files are named by HockeyTech's numeric team ID, plus a season for teams that
- * changed their logo ("373_94.png"), so a URL from the feed is preferred: [known], else the
- * 50px one from the scores bar made full size, else a guess from the ID.
- */
-internal fun ahlLogoUrl(hockeyTechTeamId: String, known: String? = null, small: String? = null): String =
+internal fun HockeyTechLeague.logoUrl(feedTeamId: String, known: String? = null, small: String? = null): String =
     known?.takeIf { it.startsWith("https://") }
-        ?: small?.takeIf { it.startsWith("https://") }?.replace("/logos/50x50/", "/logos/")
-        ?: "https://assets.leaguestat.com/ahl/logos/$hockeyTechTeamId.png"
+        ?: small?.takeIf { it.startsWith("https://") }
+        ?: guessedLogoUrl(feedTeamId)
 
-internal fun ahlTeam(hockeyTechTeamId: String, code: String, name: String, logo: String): Team {
-    return Team(
-        id = ahlTeamId(code),
-        name = name,
-        abbreviation = code,
-        league = Leagues.AHL,
-        logo = TeamLogo(light = logo, dark = logo),
-    )
-}
+internal fun HockeyTechLeague.team(code: String, name: String, logo: String): Team = Team(
+    id = teamId(code),
+    name = name,
+    abbreviation = code,
+    league = league,
+    logo = TeamLogo(light = logo, dark = logo),
+)
 
-fun HockeyTechTeamDto.toTeam(): Team = ahlTeam(id, code, name, ahlLogoUrl(id, known = logo))
+fun HockeyTechTeamDto.toTeam(league: HockeyTechLeague): Team = league.team(code, name, league.logoUrl(id, known = logo))
 
 /** Seasons whose games may fall on [date], leaving out all-star events. */
 fun List<HockeyTechSeasonDto>.coveringDate(date: LocalDate): List<HockeyTechSeasonDto> = filter { season ->
@@ -96,8 +74,8 @@ private fun String.toLocalDateOrNull(): LocalDate? = runCatching { LocalDate.par
 
 private fun parseStart(iso: String): Instant = OffsetDateTime.parse(iso).toInstant()
 
-/** @param logos logo URLs by HockeyTech team ID, from the team list. */
-fun HockeyTechScorebarGameDto.toGame(logos: Map<String, String> = emptyMap()): Game {
+/** @param logos logo URLs by the feed's team ID, from the team list. */
+fun HockeyTechScorebarGameDto.toGame(league: HockeyTechLeague, logos: Map<String, String> = emptyMap()): Game {
     val status = hockeyTechStatus(
         status = status,
         statusText = statusText,
@@ -109,23 +87,23 @@ fun HockeyTechScorebarGameDto.toGame(logos: Map<String, String> = emptyMap()): G
     val started = status is GameStatus.Live || status is GameStatus.Final
     val upcoming = status !is GameStatus.Final
     return Game(
-        id = ahlGameId(id),
-        league = Leagues.AHL,
+        id = league.gameId(id),
+        league = league.league,
         startTime = parseStart(startTime),
         status = status,
-        away = ahlTeam(visitorId, visitorCode, visitorName, ahlLogoUrl(visitorId, logos[visitorId], visitorLogo)),
-        home = ahlTeam(homeId, homeCode, homeName, ahlLogoUrl(homeId, logos[homeId], homeLogo)),
+        away = league.team(visitorCode, visitorName, league.logoUrl(visitorId, logos[visitorId], visitorLogo)),
+        home = league.team(homeCode, homeName, league.logoUrl(homeId, logos[homeId], homeLogo)),
         awayScore = if (started) visitorGoals.toIntOrNull() else null,
         homeScore = if (started) homeGoals.toIntOrNull() else null,
         venue = venue?.takeIf { it.isNotBlank() },
         // The feed sends the current record, which is only right for games yet to be played.
-        awayRecord = if (upcoming) record(visitorWins, visitorLosses, visitorOtLosses, visitorSoLosses) else null,
-        homeRecord = if (upcoming) record(homeWins, homeLosses, homeOtLosses, homeSoLosses) else null,
+        awayRecord = if (upcoming) league.record(visitorWins, visitorLosses, visitorOtLosses, visitorSoLosses) else null,
+        homeRecord = if (upcoming) league.record(homeWins, homeLosses, homeOtLosses, homeSoLosses) else null,
     )
 }
 
-/** @param logos logo URLs by HockeyTech team ID, from the team list (the schedule has none). */
-fun HockeyTechScheduleGameDto.toGame(logos: Map<String, String> = emptyMap()): Game {
+/** @param logos logo URLs by the feed's team ID, from the team list (the schedule has none). */
+fun HockeyTechScheduleGameDto.toGame(league: HockeyTechLeague, logos: Map<String, String> = emptyMap()): Game {
     val status = hockeyTechStatus(
         status = status,
         statusText = statusText,
@@ -138,22 +116,22 @@ fun HockeyTechScheduleGameDto.toGame(logos: Map<String, String> = emptyMap()): G
     )
     val started = status is GameStatus.Live || status is GameStatus.Final
     return Game(
-        id = ahlGameId(id),
-        league = Leagues.AHL,
+        id = league.gameId(id),
+        league = league.league,
         startTime = parseStart(startTime),
         status = status,
-        away = ahlTeam(visitorId, visitorCode, visitorName, ahlLogoUrl(visitorId, logos[visitorId])),
-        home = ahlTeam(homeId, homeCode, homeName, ahlLogoUrl(homeId, logos[homeId])),
+        away = league.team(visitorCode, visitorName, league.logoUrl(visitorId, logos[visitorId])),
+        home = league.team(homeCode, homeName, league.logoUrl(homeId, logos[homeId])),
         awayScore = if (started) visitorGoals.toIntOrNull() else null,
         homeScore = if (started) homeGoals.toIntOrNull() else null,
         venue = venue?.takeIf { it.isNotBlank() },
     )
 }
 
-/** The AHL's record format: wins, regulation losses, overtime losses, shootout losses. */
-private fun record(wins: String?, losses: String?, otLosses: String?, soLosses: String?): String? {
-    val parts = listOf(wins, losses, otLosses, soLosses).map { it?.toIntOrNull() ?: return null }
-    return parts.joinToString("-")
+/** "W-L-OTL-SOL" (AHL) or "W-L-OTL" with shootout losses counted as overtime losses (SPHL). */
+internal fun HockeyTechLeague.record(wins: String?, losses: String?, otLosses: String?, soLosses: String?): String? {
+    val (w, l, otl, sol) = listOf(wins, losses, otLosses, soLosses).map { it?.toIntOrNull() ?: return null }
+    return if (shootoutLossesInRecord) "$w-$l-$otl-$sol" else "$w-$l-${otl + sol}"
 }
 
 /**
@@ -210,7 +188,7 @@ internal fun hockeyTechStatus(
  * Full details for one game from its summary, with the live state from [clock] when it could be
  * fetched (the summary itself has no period or clock).
  */
-fun HockeyTechGameSummaryDto.toGameDetails(clock: HockeyTechClockDto?, suggestedRefresh: Duration?): GameDetails {
+fun HockeyTechGameSummaryDto.toGameDetails(league: HockeyTechLeague, clock: HockeyTechClockDto?, suggestedRefresh: Duration?): GameDetails {
     val summaryStatus = when {
         details.final == "1" -> hockeyTechStatus(
             status = "4",
@@ -236,11 +214,11 @@ fun HockeyTechGameSummaryDto.toGameDetails(clock: HockeyTechClockDto?, suggested
         )
     } ?: summaryStatus
     val started = status is GameStatus.Live || status is GameStatus.Final
-    val away = visitingTeam.toTeam()
-    val home = homeTeam.toTeam()
+    val away = visitingTeam.toTeam(league)
+    val home = homeTeam.toTeam(league)
     val game = Game(
-        id = ahlGameId(details.id),
-        league = Leagues.AHL,
+        id = league.gameId(details.id),
+        league = league.league,
         startTime = parseStart(details.startTime),
         status = status,
         away = away,
@@ -266,7 +244,8 @@ fun HockeyTechGameSummaryDto.toGameDetails(clock: HockeyTechClockDto?, suggested
     )
 }
 
-private fun HockeyTechSummaryTeamDto.toTeam(): Team = ahlTeam(info.id, info.abbreviation, info.name, ahlLogoUrl(info.id, known = info.logo))
+private fun HockeyTechSummaryTeamDto.toTeam(league: HockeyTechLeague): Team =
+    league.team(info.abbreviation, info.name, league.logoUrl(info.id, known = info.logo))
 
 /**
  * Teams link to their radio broadcast's web page (iHeartRadio, Mixlr...), which opens in the

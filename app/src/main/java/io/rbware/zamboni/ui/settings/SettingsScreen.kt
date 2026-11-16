@@ -93,7 +93,8 @@ enum class SettingsSection(@param:StringRes val title: Int, val icon: ImageVecto
     NOTIFICATIONS(R.string.settings_notifications, Icons.Outlined.Notifications),
     NEWS_SOURCES(R.string.settings_news_sources, Icons.Outlined.Newspaper),
     SOCIAL_SOURCES(R.string.settings_social_sources, Icons.Outlined.Forum),
-    HOCKEYTECH(R.string.settings_hockeytech, Icons.Outlined.Key),
+    AHL_KEY(R.string.settings_ahl, Icons.Outlined.Key),
+    SPHL_KEY(R.string.settings_sphl, Icons.Outlined.Key),
     GAMESHEET(R.string.settings_gamesheet, Icons.Outlined.Key),
     ABOUT(R.string.settings_about, Icons.Outlined.Info),
 }
@@ -219,11 +220,17 @@ fun SettingsScreen(
                             onToggle = viewModel::toggleLeague,
                             notes = leagueNotes(nahlNeedsKey = state.gamesheet.key.source == ApiKeySource.NONE),
                         )
-                        SettingsSection.HOCKEYTECH -> ApiKeySection(
-                            state = state.hockeyTech,
-                            texts = ApiKeyTexts.HockeyTech,
-                            onSave = viewModel::saveHockeyTechKey,
-                            onClear = viewModel::clearHockeyTechKey,
+                        SettingsSection.AHL_KEY -> ApiKeySection(
+                            state = state.ahlKey,
+                            texts = ApiKeyTexts.Ahl,
+                            onSave = viewModel::saveAhlKey,
+                            onClear = viewModel::clearAhlKey,
+                        )
+                        SettingsSection.SPHL_KEY -> ApiKeySection(
+                            state = state.sphlKey,
+                            texts = ApiKeyTexts.Sphl,
+                            onSave = viewModel::saveSphlKey,
+                            onClear = viewModel::clearSphlKey,
                         )
                         SettingsSection.GAMESHEET -> ApiKeySection(
                             state = state.gamesheet,
@@ -283,7 +290,8 @@ private fun SettingsList(
             R.plurals.settings_social_summary,
             state.socialSources?.count { prefs.isSocialSourceEnabled(it) } ?: 0,
         )
-        SettingsSection.HOCKEYTECH -> apiKeySummary(state.hockeyTech, ApiKeyTexts.HockeyTech)
+        SettingsSection.AHL_KEY -> apiKeySummary(state.ahlKey, ApiKeyTexts.Ahl)
+        SettingsSection.SPHL_KEY -> apiKeySummary(state.sphlKey, ApiKeyTexts.Sphl)
         SettingsSection.GAMESHEET -> apiKeySummary(state.gamesheet, ApiKeyTexts.Gamesheet)
         SettingsSection.ABOUT -> stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME)
     }
@@ -348,7 +356,8 @@ private fun SettingsList(
             }
             // Each data source's key only matters while its league is on.
             val dataSections = buildList {
-                if (Leagues.AHL.id in prefs.enabledLeagueIds) add(SettingsSection.HOCKEYTECH)
+                if (Leagues.AHL.id in prefs.enabledLeagueIds) add(SettingsSection.AHL_KEY)
+                if (Leagues.SPHL.id in prefs.enabledLeagueIds) add(SettingsSection.SPHL_KEY)
                 if (Leagues.NAHL.id in prefs.enabledLeagueIds) add(SettingsSection.GAMESHEET)
             }
             if (dataSections.isNotEmpty()) sectionGroup(R.string.settings_group_data, dataSections)

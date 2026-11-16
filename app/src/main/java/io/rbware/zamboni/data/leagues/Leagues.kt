@@ -6,13 +6,14 @@ import io.rbware.zamboni.data.model.League
 object Leagues {
     val NHL = League(id = "nhl", shortName = "NHL", name = "National Hockey League")
     val AHL = League(id = "ahl", shortName = "AHL", name = "American Hockey League")
+    val SPHL = League(id = "sphl", shortName = "SPHL", name = "Southern Professional Hockey League")
     val NAHL = League(id = "nahl", shortName = "NAHL", name = "North American Hockey League")
 
     /**
      * Every league, in display order (league picker, scores filter, team lists). A new league
      * goes here, with a scores source in AppContainer.
      */
-    val all: List<League> = listOf(NHL, AHL, NAHL)
+    val all: List<League> = listOf(NHL, AHL, SPHL, NAHL)
 
     /** Leagues turned on for new users. */
     val defaultEnabledIds: Set<String> = setOf(NHL.id)

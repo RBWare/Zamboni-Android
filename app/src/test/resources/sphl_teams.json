@@ -1,0 +1,159 @@
+{
+ "SiteKit": {
+  "Parameters": {
+   "client_code": "sphl"
+  },
+  "Teamsbyseason": [
+   {
+    "id": "27",
+    "name": "Athens Rock Lobsters",
+    "city": "Athens",
+    "code": "ATH",
+    "nickname": "Rock Lobsters",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/27.png"
+   },
+   {
+    "id": "9",
+    "name": "Birmingham Bulls",
+    "city": "Birmingham",
+    "code": "BHM",
+    "nickname": "Bulls",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/9.jpg"
+   },
+   {
+    "id": "5",
+    "name": "Evansville Thunderbolts",
+    "city": "Evansville",
+    "code": "EVV",
+    "nickname": "Thunderbolts",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/5.jpg"
+   },
+   {
+    "id": "2",
+    "name": "Fayetteville Marksmen",
+    "city": "Fayetteville",
+    "code": "FAY",
+    "nickname": "Marksmen",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/2.jpg"
+   },
+   {
+    "id": "3",
+    "name": "Huntsville Havoc",
+    "city": "Huntsville",
+    "code": "HSV",
+    "nickname": "Havoc",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/3.jpg"
+   },
+   {
+    "id": "6",
+    "name": "Knoxville Ice Bears",
+    "city": "Knoxville",
+    "code": "KNX",
+    "nickname": "Ice Bears",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/6.jpg"
+   },
+   {
+    "id": "10",
+    "name": "Macon Mayhem",
+    "city": "Macon",
+    "code": "MAC",
+    "nickname": "Mayhem",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/10.png"
+   },
+   {
+    "id": "28",
+    "name": "Pee Dee IceCats",
+    "city": "Pee Dee",
+    "code": "PD",
+    "nickname": "IceCats",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/28.png"
+   },
+   {
+    "id": "4",
+    "name": "Pensacola Ice Flyers",
+    "city": "Pensacola",
+    "code": "PEN",
+    "nickname": "Ice Flyers",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/4.png"
+   },
+   {
+    "id": "1",
+    "name": "Peoria Rivermen",
+    "city": "Peoria",
+    "code": "PEO",
+    "nickname": "Rivermen",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/1.jpg"
+   },
+   {
+    "id": "8",
+    "name": "Quad City Storm",
+    "city": "Quad City",
+    "code": "QC",
+    "nickname": "Storm",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/8.png"
+   },
+   {
+    "id": "7",
+    "name": "Roanoke Rail Yard Dawgs",
+    "city": "Roanoke",
+    "code": "RNK",
+    "nickname": "Rail Yard Dawgs",
+    "team_caption": "",
+    "division_id": "1",
+    "division_long_name": "SPHL",
+    "division_short_name": "SPHL",
+    "team_logo_url": "https://assets.leaguestat.com/sphl/logos/7.jpg"
+   }
+  ],
+  "Copyright": {
+   "required_copyright": "Official statistics provided by Southern Professional Hockey League",
+   "required_link": "http://leaguestat.com",
+   "powered_by": "Powered by HockeyTech.com",
+   "powered_by_url": "http://hockeytech.com"
+  }
+ }
+}

@@ -1,0 +1,522 @@
+({
+ "details": {
+  "id": 5886,
+  "date": "Sunday, November 15, 2026",
+  "gameNumber": "60",
+  "venue": "Crown Coliseum",
+  "attendance": 2509,
+  "startTime": "3:10 pm EST",
+  "endTime": "5:39 pm EST",
+  "duration": "2:29",
+  "gameReportUrl": "https://lscluster.hockeytech.com/game_reports/official-game-report.php?lang_id=1&client_code=sphl&game_id=5886",
+  "textBoxscoreUrl": "https://lscluster.hockeytech.com/game_reports/text-game-report.php?lang_id=1&client_code=sphl&game_id=5886",
+  "ticketsUrl": "",
+  "started": "1",
+  "final": "1",
+  "publicNotes": "pd 3, 00:05, Ath TO",
+  "status": "Final",
+  "seasonId": "46",
+  "floHockeyUrl": "https://flohockey.tv/events/16116753",
+  "GameDateISO8601": "2026-11-15T15:00:00-05:00",
+  "mvpType": 1
+ },
+ "hasShootout": false,
+ "homeTeam": {
+  "info": {
+   "id": 2,
+   "name": "Fayetteville Marksmen",
+   "city": "Fayetteville",
+   "nickname": "Marksmen",
+   "abbreviation": "FAY",
+   "logo": "https://assets.leaguestat.com/sphl/logos/2.jpg",
+   "divisionName": "SPHL"
+  },
+  "stats": {
+   "shots": 25,
+   "goals": 4,
+   "hits": 0,
+   "powerPlayGoals": 2,
+   "powerPlayOpportunities": 4,
+   "goalCount": 4,
+   "assistCount": 7,
+   "penaltyMinuteCount": 14,
+   "infractionCount": 7,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "visitingTeam": {
+  "info": {
+   "id": 27,
+   "name": "Athens Rock Lobsters",
+   "city": "Athens",
+   "nickname": "Rock Lobsters",
+   "abbreviation": "ATH",
+   "logo": "https://assets.leaguestat.com/sphl/logos/27.png",
+   "divisionName": "SPHL"
+  },
+  "stats": {
+   "shots": 33,
+   "goals": 3,
+   "hits": 0,
+   "powerPlayGoals": 2,
+   "powerPlayOpportunities": 7,
+   "goalCount": 3,
+   "assistCount": 4,
+   "penaltyMinuteCount": 8,
+   "infractionCount": 4,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "periods": [
+  {
+   "info": {
+    "id": "1",
+    "shortName": "1",
+    "longName": "1st"
+   },
+   "stats": {
+    "homeGoals": "0",
+    "homeShots": "4",
+    "visitingGoals": "0",
+    "visitingShots": "10"
+   },
+   "goals": []
+  },
+  {
+   "info": {
+    "id": "2",
+    "shortName": "2",
+    "longName": "2nd"
+   },
+   "stats": {
+    "homeGoals": "3",
+    "homeShots": "11",
+    "visitingGoals": "2",
+    "visitingShots": "14"
+   },
+   "goals": [
+    {
+     "game_goal_id": "36065",
+     "team": {
+      "id": 27,
+      "name": "Athens Rock Lobsters",
+      "city": "Athens",
+      "nickname": "Rock Lobsters",
+      "abbreviation": "ATH",
+      "logo": "https://assets.leaguestat.com/sphl/logos/27.png",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "3:34",
+     "scorerGoalNumber": "4",
+     "scoredBy": {
+      "id": 3849,
+      "firstName": "Gleb",
+      "lastName": "Bandurkin",
+      "jerseyNumber": 12,
+      "position": "C",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3849.jpg"
+     },
+     "assists": [],
+     "assistNumbers": [
+      "0",
+      "0"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    },
+    {
+     "game_goal_id": "36066",
+     "team": {
+      "id": 2,
+      "name": "Fayetteville Marksmen",
+      "city": "Fayetteville",
+      "nickname": "Marksmen",
+      "abbreviation": "FAY",
+      "logo": "https://assets.leaguestat.com/sphl/logos/2.jpg",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "9:48",
+     "scorerGoalNumber": "3",
+     "scoredBy": {
+      "id": 3950,
+      "firstName": "Austin",
+      "lastName": "D'Orazio",
+      "jerseyNumber": 19,
+      "position": "D",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3950.jpg"
+     },
+     "assists": [
+      {
+       "id": 3872,
+       "firstName": "Aaron",
+       "lastName": "Hamel",
+       "jerseyNumber": 13,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3872.jpg"
+      },
+      {
+       "id": 3800,
+       "firstName": "Evan",
+       "lastName": "Pringle",
+       "jerseyNumber": 17,
+       "position": "C",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3800.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "2",
+      "4"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    },
+    {
+     "game_goal_id": "36067",
+     "team": {
+      "id": 2,
+      "name": "Fayetteville Marksmen",
+      "city": "Fayetteville",
+      "nickname": "Marksmen",
+      "abbreviation": "FAY",
+      "logo": "https://assets.leaguestat.com/sphl/logos/2.jpg",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "12:20",
+     "scorerGoalNumber": "2",
+     "scoredBy": {
+      "id": 3876,
+      "firstName": "Lincoln",
+      "lastName": "Moore",
+      "jerseyNumber": 18,
+      "position": "RW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3876.jpg"
+     },
+     "assists": [
+      {
+       "id": 3800,
+       "firstName": "Evan",
+       "lastName": "Pringle",
+       "jerseyNumber": 17,
+       "position": "C",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3800.jpg"
+      },
+      {
+       "id": 3651,
+       "firstName": "John",
+       "lastName": "Woernle",
+       "jerseyNumber": 4,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3651.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "5",
+      "3"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    },
+    {
+     "game_goal_id": "36068",
+     "team": {
+      "id": 27,
+      "name": "Athens Rock Lobsters",
+      "city": "Athens",
+      "nickname": "Rock Lobsters",
+      "abbreviation": "ATH",
+      "logo": "https://assets.leaguestat.com/sphl/logos/27.png",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "14:30",
+     "scorerGoalNumber": "5",
+     "scoredBy": {
+      "id": 3849,
+      "firstName": "Gleb",
+      "lastName": "Bandurkin",
+      "jerseyNumber": 12,
+      "position": "C",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3849.jpg"
+     },
+     "assists": [
+      {
+       "id": 3847,
+       "firstName": "Logan",
+       "lastName": "Acheson",
+       "jerseyNumber": 4,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3847.jpg"
+      },
+      {
+       "id": 3736,
+       "firstName": "Connor",
+       "lastName": "Galloway",
+       "jerseyNumber": 22,
+       "position": "RW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3736.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "3",
+      "6"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    },
+    {
+     "game_goal_id": "36069",
+     "team": {
+      "id": 2,
+      "name": "Fayetteville Marksmen",
+      "city": "Fayetteville",
+      "nickname": "Marksmen",
+      "abbreviation": "FAY",
+      "logo": "https://assets.leaguestat.com/sphl/logos/2.jpg",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "19:20",
+     "scorerGoalNumber": "1",
+     "scoredBy": {
+      "id": 3875,
+      "firstName": "Bryan",
+      "lastName": "Huggins",
+      "jerseyNumber": 11,
+      "position": "D",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3875.jpg"
+     },
+     "assists": [
+      {
+       "id": 3719,
+       "firstName": "Graeme",
+       "lastName": "McCrory",
+       "jerseyNumber": 10,
+       "position": "C",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3719.jpg"
+      },
+      {
+       "id": 3602,
+       "firstName": "Kyler",
+       "lastName": "Head",
+       "jerseyNumber": 23,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3602.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "2",
+      "4"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  },
+  {
+   "info": {
+    "id": "3",
+    "shortName": "3",
+    "longName": "3rd"
+   },
+   "stats": {
+    "homeGoals": "1",
+    "homeShots": "10",
+    "visitingGoals": "1",
+    "visitingShots": "9"
+   },
+   "goals": [
+    {
+     "game_goal_id": "36070",
+     "team": {
+      "id": 27,
+      "name": "Athens Rock Lobsters",
+      "city": "Athens",
+      "nickname": "Rock Lobsters",
+      "abbreviation": "ATH",
+      "logo": "https://assets.leaguestat.com/sphl/logos/27.png",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "3",
+      "shortName": "",
+      "longName": "3rd"
+     },
+     "time": "6:39",
+     "scorerGoalNumber": "2",
+     "scoredBy": {
+      "id": 3856,
+      "firstName": "Joe",
+      "lastName": "Mack",
+      "jerseyNumber": 74,
+      "position": "C",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3856.jpg"
+     },
+     "assists": [
+      {
+       "id": 3483,
+       "firstName": "Brandon",
+       "lastName": "Reller",
+       "jerseyNumber": 92,
+       "position": "C",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3483.jpg"
+      },
+      {
+       "id": 88,
+       "firstName": "Carter",
+       "lastName": "Shinkaruk",
+       "jerseyNumber": 14,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/88.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "4",
+      "3"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    },
+    {
+     "game_goal_id": "36071",
+     "team": {
+      "id": 2,
+      "name": "Fayetteville Marksmen",
+      "city": "Fayetteville",
+      "nickname": "Marksmen",
+      "abbreviation": "FAY",
+      "logo": "https://assets.leaguestat.com/sphl/logos/2.jpg",
+      "divisionName": "SPHL"
+     },
+     "period": {
+      "id": "3",
+      "shortName": "",
+      "longName": "3rd"
+     },
+     "time": "16:54",
+     "scorerGoalNumber": "3",
+     "scoredBy": {
+      "id": 3642,
+      "firstName": "Shane",
+      "lastName": "Murphy",
+      "jerseyNumber": 22,
+      "position": "LW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3642.jpg"
+     },
+     "assists": [
+      {
+       "id": 3876,
+       "firstName": "Lincoln",
+       "lastName": "Moore",
+       "jerseyNumber": 18,
+       "position": "RW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/sphl/120x160/3876.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "3",
+      "0"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "1"
+     }
+    }
+   ]
+  }
+ ]
+})

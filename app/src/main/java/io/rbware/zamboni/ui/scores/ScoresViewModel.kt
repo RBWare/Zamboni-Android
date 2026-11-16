@@ -95,7 +95,7 @@ class ScoresViewModel(
      * can add or remove a league).
      */
     private val keyChanges = userPreferencesRepository.userPreferences
-        .map { Triple(it.enabledLeagueIds, it.gamesheetApiKey, it.hockeyTechApiKey) }
+        .map { listOf(it.enabledLeagueIds, it.gamesheetApiKey, it.ahlApiKey, it.sphlApiKey) }
         .distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)

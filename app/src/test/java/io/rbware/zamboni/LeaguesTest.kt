@@ -17,12 +17,13 @@ class LeaguesTest {
     @Test
     fun nhlIsTheOnlyDefault() {
         assertEquals(setOf("nhl"), Leagues.defaultEnabledIds)
-        assertEquals(listOf("nhl", "ahl", "nahl"), Leagues.all.map { it.id })
+        assertEquals(listOf("nhl", "ahl", "sphl", "nahl"), Leagues.all.map { it.id })
     }
 
     @Test
     fun leagueOfTeam() {
         assertEquals("ahl", leagueIdOfTeam("ahl-bel"))
+        assertEquals("sphl", leagueIdOfTeam("sphl-fay"))
         assertEquals("nahl", leagueIdOfTeam("nahl-lone-star-brahmas"))
         assertNull(leagueIdOfTeam("xyz-abc"))
         assertNull(leagueIdOfTeam("dal"))

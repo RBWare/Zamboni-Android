@@ -22,7 +22,7 @@ import io.rbware.zamboni.data.scores.ApiKeyCheck
 import io.rbware.zamboni.data.scores.ApiKeyProvider
 import io.rbware.zamboni.data.scores.ApiKeySource
 import io.rbware.zamboni.data.scores.GamesheetNahlRepository
-import io.rbware.zamboni.data.scores.HockeyTechAhlRepository
+import io.rbware.zamboni.data.scores.HockeyTechRepository
 import io.rbware.zamboni.data.social.SocialAccountNotFoundException
 import io.rbware.zamboni.data.social.YouTubeChannelInput
 import io.rbware.zamboni.data.social.YouTubeClient
@@ -44,7 +44,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** State of a data source's key editor (Gamesheet or HockeyTech). */
+/** State of a data source's key editor (Gamesheet, or HockeyTech for one league). */
 data class ApiKeyUiState(
     val key: ApiKey = ApiKey(null, ApiKeySource.NONE),
     /** True while a key is being checked against its source. */
@@ -69,7 +69,8 @@ data class SettingsUiState(
     val newsSources: List<NewsSource>? = null,
     val socialSources: List<SocialSource>? = null,
     val gamesheet: ApiKeyUiState = ApiKeyUiState(),
-    val hockeyTech: ApiKeyUiState = ApiKeyUiState(),
+    val ahlKey: ApiKeyUiState = ApiKeyUiState(),
+    val sphlKey: ApiKeyUiState = ApiKeyUiState(),
 )
 
 /** Edits the same choices made during onboarding, plus app-level settings. Changes are saved immediately. */
@@ -83,8 +84,10 @@ class SettingsViewModel(
     private val userPreferencesRepository: UserPreferencesRepository,
     gamesheetKeyProvider: ApiKeyProvider,
     nahlRepository: GamesheetNahlRepository,
-    hockeyTechKeyProvider: ApiKeyProvider,
-    ahlRepository: HockeyTechAhlRepository,
+    ahlKeyProvider: ApiKeyProvider,
+    ahlRepository: HockeyTechRepository,
+    sphlKeyProvider: ApiKeyProvider,
+    sphlRepository: HockeyTechRepository,
     private val notifier: Notifier,
 ) : ViewModel() {
 
@@ -119,22 +122,23 @@ class SettingsViewModel(
     }
 
     private val gamesheetKey = KeyEditor(gamesheetKeyProvider, nahlRepository::checkKey, userPreferencesRepository::setGamesheetApiKey)
-    private val hockeyTechKey = KeyEditor(hockeyTechKeyProvider, ahlRepository::checkKey, userPreferencesRepository::setHockeyTechApiKey)
+    private val ahlKey = KeyEditor(ahlKeyProvider, ahlRepository::checkKey, userPreferencesRepository::setAhlApiKey)
+    private val sphlKey = KeyEditor(sphlKeyProvider, sphlRepository::checkKey, userPreferencesRepository::setSphlApiKey)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.userPreferences,
         // Reload teams when a key changes, so AHL and NAHL teams appear or disappear with it.
-        combine(gamesheetKeyProvider.key, hockeyTechKeyProvider.key) { a, b -> a to b }
+        combine(gamesheetKeyProvider.key, ahlKeyProvider.key, sphlKeyProvider.key) { a, b, c -> Triple(a, b, c) }
             .flatMapLatest { flow { emit(null); emit(teamRepository.getTeams()) } },
         combine(
             flow { emit(null); emit(newsSourceRepository.getSources()) },
             socialSourceRepository.sources,
         ) { news, social -> news to social },
-        combine(gamesheetKey.state, hockeyTechKey.state) { a, b -> a to b },
-    ) { prefs, teams, (newsSources, socialSources), (gamesheet, hockeyTech) ->
+        combine(gamesheetKey.state, ahlKey.state, sphlKey.state) { a, b, c -> Triple(a, b, c) },
+    ) { prefs, teams, (newsSources, socialSources), (gamesheet, ahl, sphl) ->
         // Teams of turned-off leagues are hidden (their favorites stay saved).
         val shownTeams = teams?.filter { it.league.id in prefs.enabledLeagueIds }
-        SettingsUiState(prefs, shownTeams, newsSources, socialSources, gamesheet, hockeyTech)
+        SettingsUiState(prefs, shownTeams, newsSources, socialSources, gamesheet, ahl, sphl)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     /** Turns a league on or off; the last one that's on stays on. */
@@ -265,9 +269,13 @@ class SettingsViewModel(
 
     fun clearGamesheetKey() = gamesheetKey.clear()
 
-    fun saveHockeyTechKey(key: String) = hockeyTechKey.save(key)
+    fun saveAhlKey(key: String) = ahlKey.save(key)
 
-    fun clearHockeyTechKey() = hockeyTechKey.clear()
+    fun clearAhlKey() = ahlKey.clear()
+
+    fun saveSphlKey(key: String) = sphlKey.save(key)
+
+    fun clearSphlKey() = sphlKey.clear()
 
     companion object {
         val Factory = viewModelFactory {
@@ -282,8 +290,10 @@ class SettingsViewModel(
                     container.userPreferencesRepository,
                     container.gamesheetKeyProvider,
                     container.nahlRepository,
-                    container.hockeyTechKeyProvider,
+                    container.ahlKeyProvider,
                     container.ahlRepository,
+                    container.sphlKeyProvider,
+                    container.sphlRepository,
                     container.notifier,
                 )
             }

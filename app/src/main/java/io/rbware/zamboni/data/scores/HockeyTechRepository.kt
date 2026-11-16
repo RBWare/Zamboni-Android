@@ -1,6 +1,5 @@
 package io.rbware.zamboni.data.scores
 
-import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameDetails
 import io.rbware.zamboni.data.model.GameStatus
@@ -32,15 +31,17 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
- * AHL scores, game details and teams from HockeyTech's feed (see [HockeyTechApi]).
+ * Scores, game details and teams for one HockeyTech [league] (AHL, SPHL) from its feed (see
+ * [HockeyTechApi]).
  *
  * Days around today come from the scores bar, which is small and has live status. Other days
  * come from the season's full schedule, which is large, so it is kept for a while.
  *
- * Every call needs a key from [apiKey] (the AHL website's public one unless the user entered
- * another). Without one the AHL is left out: no league, no games and no teams.
+ * Every call needs a key from [apiKey] (the league website's public one unless the user entered
+ * another). Without one the league is left out: no league, no games and no teams.
  */
-class HockeyTechAhlRepository(
+class HockeyTechRepository(
+    private val league: HockeyTechLeague,
     private val api: HockeyTechApi,
     private val apiKey: suspend () -> String?,
     private val clock: Clock = Clock.system(ZoneId.of("America/New_York")),
@@ -62,18 +63,18 @@ class HockeyTechAhlRepository(
         fun isFreshFor(key: String, maxAge: Duration) = this.key == key && at.elapsedNow() < maxAge
     }
 
-    override suspend fun getLeagues(): List<League> = if (apiKey() != null) listOf(Leagues.AHL) else emptyList()
+    override suspend fun getLeagues(): List<League> = if (apiKey() != null) listOf(league.league) else emptyList()
 
     override suspend fun getSchedule(date: LocalDate): Schedule {
         val key = apiKey() ?: return Schedule(date = date, games = emptyList())
         val today = LocalDate.now(clock)
         val games = if (date in today.minusDays(1)..today.plusDays(1)) {
             // One game day either way covers yesterday and tomorrow (or less, when those had no games).
-            api.getScorebar(key, HockeyTechApi.AHL, daysBack = 1, daysAhead = 1)
+            api.getScorebar(key, league.clientCode, daysBack = 1, daysAhead = 1)
                 .decodeHockeyTech<HockeyTechSiteKitResponse>()
                 .siteKit.scorebar.orEmpty()
                 .filter { it.date == date.toString() }
-                .map { it.toGame(logos(key)) }
+                .map { it.toGame(league, logos(key)) }
         } else {
             seasonGames(key, date)
         }.sortedBy { it.startTime }
@@ -82,19 +83,19 @@ class HockeyTechAhlRepository(
 
     override suspend fun getGameDetails(gameId: String): GameDetails = coroutineScope {
         val key = apiKey() ?: throw GameNotFoundException(gameId)
-        val id = parseAhlGameId(gameId) ?: throw GameNotFoundException(gameId)
-        val summary = async { api.getGameSummary(key, HockeyTechApi.AHL, id).decodeHockeyTech<HockeyTechGameSummaryDto>() }
+        val id = league.parseGameId(gameId) ?: throw GameNotFoundException(gameId)
+        val summary = async { api.getGameSummary(key, league.clientCode, id).decodeHockeyTech<HockeyTechGameSummaryDto>() }
         // The summary has no period or clock; without them a live game just shows as in progress.
         val liveClock = async {
             try {
-                api.getClock(key, HockeyTechApi.AHL, id).decodeHockeyTech<HockeyTechClockResponse>().gc.clock
+                api.getClock(key, league.clientCode, id).decodeHockeyTech<HockeyTechClockResponse>().gc.clock
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 null as HockeyTechClockDto?
             }
         }
-        val details = summary.await().toGameDetails(liveClock.await(), suggestedRefresh = null)
+        val details = summary.await().toGameDetails(league, liveClock.await(), suggestedRefresh = null)
         details.copy(suggestedRefresh = refreshFor(details.game.status is GameStatus.Live))
     }
 
@@ -103,10 +104,10 @@ class HockeyTechAhlRepository(
         val key = apiKey() ?: return emptyList()
         mutex.withLock { teams?.takeIf { it.isFreshFor(key, TEAMS_MAX_AGE) }?.let { return it.value } }
         val season = seasons(key).currentRegularSeason(LocalDate.now(clock)) ?: return emptyList()
-        val dtos = api.getTeams(key, HockeyTechApi.AHL, season.id)
+        val dtos = api.getTeams(key, league.clientCode, season.id)
             .decodeHockeyTech<HockeyTechSiteKitResponse>()
             .siteKit.teams.orEmpty()
-        val result = dtos.map { it.toTeam() }.sortedBy { it.name }
+        val result = dtos.map { it.toTeam(league) }.sortedBy { it.name }
         mutex.withLock {
             teams = Cached(result, key)
             teamLogos = dtos.mapNotNull { dto -> dto.logo?.let { dto.id to it } }.toMap()
@@ -129,7 +130,7 @@ class HockeyTechAhlRepository(
 
     /** Checks [key] against the feed without saving or caching anything. */
     suspend fun checkKey(key: String): ApiKeyCheck = try {
-        val seasons = api.getSeasons(key.trim(), HockeyTechApi.AHL).decodeHockeyTech<HockeyTechSiteKitResponse>().siteKit.seasons
+        val seasons = api.getSeasons(key.trim(), league.clientCode).decodeHockeyTech<HockeyTechSiteKitResponse>().siteKit.seasons
         if (seasons.isNullOrEmpty()) ApiKeyCheck.REJECTED else ApiKeyCheck.VALID
     } catch (e: CancellationException) {
         throw e
@@ -152,12 +153,12 @@ class HockeyTechAhlRepository(
     private suspend fun seasonSchedule(key: String, seasonId: String): List<DatedGame> {
         mutex.withLock { schedules[seasonId]?.takeIf { it.isFreshFor(key, SCHEDULE_MAX_AGE) }?.let { return it.value } }
         val logos = logos(key)
-        val games = api.getSchedule(key, HockeyTechApi.AHL, seasonId)
+        val games = api.getSchedule(key, league.clientCode, seasonId)
             .decodeHockeyTech<HockeyTechSiteKitResponse>()
             .siteKit.schedule.orEmpty()
             .mapNotNull { dto ->
                 val day = runCatching { LocalDate.parse(dto.date) }.getOrNull() ?: return@mapNotNull null
-                DatedGame(day, dto.toGame(logos))
+                DatedGame(day, dto.toGame(league, logos))
             }
         mutex.withLock { schedules[seasonId] = Cached(games, key) }
         return games
@@ -165,7 +166,7 @@ class HockeyTechAhlRepository(
 
     private suspend fun seasons(key: String): List<HockeyTechSeasonDto> {
         mutex.withLock { seasons?.takeIf { it.isFreshFor(key, SEASONS_MAX_AGE) }?.let { return it.value } }
-        val result = api.getSeasons(key, HockeyTechApi.AHL).decodeHockeyTech<HockeyTechSiteKitResponse>().siteKit.seasons.orEmpty()
+        val result = api.getSeasons(key, league.clientCode).decodeHockeyTech<HockeyTechSiteKitResponse>().siteKit.seasons.orEmpty()
         mutex.withLock { seasons = Cached(result, key) }
         return result
     }

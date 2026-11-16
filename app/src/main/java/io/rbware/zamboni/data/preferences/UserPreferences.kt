@@ -28,8 +28,9 @@ data class UserPreferences(
     val scoresFilter: ScoresFilter = ScoresFilter(),
     /** Gamesheet partner key entered in Settings, or null to use the one built into the app (if any). */
     val gamesheetApiKey: String? = null,
-    /** HockeyTech key entered in Settings, or null to use the AHL website's public one. */
-    val hockeyTechApiKey: String? = null,
+    /** HockeyTech keys entered in Settings, or null to use each league website's public one. */
+    val ahlApiKey: String? = null,
+    val sphlApiKey: String? = null,
 )
 
 /** How the Scores list is filtered and ordered. Persisted so it sticks between launches. */

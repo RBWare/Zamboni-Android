@@ -13,14 +13,12 @@ import io.rbware.zamboni.data.remote.HockeyTechGameSummaryDto
 import io.rbware.zamboni.data.remote.HockeyTechKeyRejectedException
 import io.rbware.zamboni.data.remote.HockeyTechSiteKitResponse
 import io.rbware.zamboni.data.remote.decodeHockeyTech
-import io.rbware.zamboni.data.scores.ahlGameId
 import io.rbware.zamboni.data.scores.clockSeconds
 import io.rbware.zamboni.data.scores.coveringDate
 import io.rbware.zamboni.data.scores.currentRegularSeason
+import io.rbware.zamboni.data.scores.HockeyTechLeague
 import io.rbware.zamboni.data.scores.hockeyTechStatus
-import io.rbware.zamboni.data.scores.isAhlGameId
 import io.rbware.zamboni.data.scores.isNahlGameId
-import io.rbware.zamboni.data.scores.parseAhlGameId
 import io.rbware.zamboni.data.scores.radioLink
 import io.rbware.zamboni.data.scores.toGame
 import io.rbware.zamboni.data.scores.toGameDetails
@@ -35,8 +33,10 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.seconds
 
-/** Parses real lscluster.hockeytech.com responses (AHL, November 2026) from src/test/resources. */
+/** Parses real lscluster.hockeytech.com responses (AHL and SPHL, November 2026) from src/test/resources. */
 class HockeyTechMapperTest {
+    private val ahl = HockeyTechLeague.AHL
+    private val sphl = HockeyTechLeague.SPHL
 
     private inline fun <reified T> load(name: String): T =
         checkNotNull(javaClass.classLoader?.getResource(name)).readText().toResponseBody().decodeHockeyTech()
@@ -59,14 +59,16 @@ class HockeyTechMapperTest {
     fun scorebar_finalAndUpcomingGames() {
         val games = checkNotNull(siteKit("hockeytech_scorebar.json").scorebar).associateBy { it.id }
 
-        val bel = games.getValue("1029321").toGame()
+        val bel = games.getValue("1029321").toGame(ahl)
         assertEquals("ahl-1029321", bel.id)
         assertEquals(Leagues.AHL, bel.league)
         assertEquals("ahl-cle", bel.away.id)
         assertEquals("Cleveland Monsters", bel.away.name)
-        // Cleveland's logo file carries the season; the 50px one from the scores bar, made full size.
-        assertEquals("https://assets.leaguestat.com/ahl/logos/373_94.png", bel.away.logo?.light)
-        assertEquals("https://assets.leaguestat.com/ahl/logos/413.png", bel.home.logo?.light)
+        // Without the team list, the scores bar's own (50px) logo; its file name carries the season.
+        assertEquals("https://assets.leaguestat.com/ahl/logos/50x50/373_94.png", bel.away.logo?.light)
+        // With it, the full-size logo from the team list.
+        val logos = mapOf("373" to "https://assets.leaguestat.com/ahl/logos/373_94.png")
+        assertEquals("https://assets.leaguestat.com/ahl/logos/373_94.png", games.getValue("1029321").toGame(ahl, logos).away.logo?.light)
         assertEquals("ahl-bel", bel.home.id)
         assertEquals(1, bel.awayScore)
         assertEquals(3, bel.homeScore)
@@ -75,9 +77,9 @@ class HockeyTechMapperTest {
         assertEquals("CIBC Place", bel.venue)
         assertNull(bel.awayRecord)
 
-        assertEquals(GameStatus.Final(Decision.SHOOTOUT), games.getValue("1029323").toGame().status)
+        assertEquals(GameStatus.Final(Decision.SHOOTOUT), games.getValue("1029323").toGame(ahl).status)
 
-        val upcoming = games.getValue("1029332").toGame()
+        val upcoming = games.getValue("1029332").toGame(ahl)
         assertEquals(GameStatus.Scheduled, upcoming.status)
         assertNull(upcoming.awayScore)
         assertTrue(upcoming.homeRecord!!.matches(Regex("""\d+-\d+-\d+-\d+""")))
@@ -85,7 +87,7 @@ class HockeyTechMapperTest {
 
     @Test
     fun teams() {
-        val teams = checkNotNull(siteKit("hockeytech_teams.json").teams).map { it.toTeam() }
+        val teams = checkNotNull(siteKit("hockeytech_teams.json").teams).map { it.toTeam(ahl) }
         assertEquals(32, teams.size)
         val utica = teams.single { it.name == "Utica Comets" }
         assertEquals("ahl-utc", utica.id)
@@ -96,7 +98,7 @@ class HockeyTechMapperTest {
 
     @Test
     fun summary_regulationFinal() {
-        val details = load<HockeyTechGameSummaryDto>("hockeytech_summary_final.json").toGameDetails(clock = null, suggestedRefresh = 120.seconds)
+        val details = load<HockeyTechGameSummaryDto>("hockeytech_summary_final.json").toGameDetails(ahl, clock = null, suggestedRefresh = 120.seconds)
         val game = details.game
         assertEquals("ahl-1029321", game.id)
         assertEquals(GameStatus.Final(Decision.REGULATION), game.status)
@@ -139,7 +141,7 @@ class HockeyTechMapperTest {
     @Test
     fun summary_shootoutWithClock() {
         val clock = load<HockeyTechClockResponse>("hockeytech_clock_final.json").gc.clock
-        val details = load<HockeyTechGameSummaryDto>("hockeytech_summary_shootout.json").toGameDetails(clock, null)
+        val details = load<HockeyTechGameSummaryDto>("hockeytech_summary_shootout.json").toGameDetails(ahl, clock, null)
         assertEquals(GameStatus.Final(Decision.SHOOTOUT), details.game.status)
         assertEquals(1, details.game.awayScore)
         assertEquals(2, details.game.homeScore)
@@ -171,13 +173,16 @@ class HockeyTechMapperTest {
 
     @Test
     fun gameIds() {
-        assertEquals("ahl-1029321", ahlGameId("1029321"))
-        assertEquals("1029321", parseAhlGameId("ahl-1029321"))
-        assertNull(parseAhlGameId("nahl-15192-2909587"))
-        assertNull(parseAhlGameId("nhl-2026020311"))
-        assertNull(parseAhlGameId("ahl-"))
-        assertFalse(isNahlGameId(ahlGameId("1")))
-        assertTrue(isAhlGameId("ahl-1"))
+        assertEquals("ahl-1029321", ahl.gameId("1029321"))
+        assertEquals("1029321", ahl.parseGameId("ahl-1029321"))
+        assertNull(ahl.parseGameId("nahl-15192-2909587"))
+        assertNull(ahl.parseGameId("nhl-2026020311"))
+        assertNull(ahl.parseGameId("sphl-5886"))
+        assertNull(sphl.parseGameId("ahl-1029321"))
+        assertNull(ahl.parseGameId("ahl-"))
+        assertFalse(isNahlGameId(ahl.gameId("1")))
+        assertTrue(sphl.ownsGameId("sphl-5886"))
+        assertEquals("sphl-fay", sphl.teamId("FAY"))
     }
 
     @Test
@@ -201,7 +206,44 @@ class HockeyTechMapperTest {
 
     @Test
     fun oldAhlFavoritesAreRenamedToCurrentCodes() {
-        val current = checkNotNull(siteKit("hockeytech_teams.json").teams).map { it.toTeam().id }.toSet()
+        val current = checkNotNull(siteKit("hockeytech_teams.json").teams).map { it.toTeam(ahl).id }.toSet()
         assertTrue(AhlTeamIdMigration.RENAMED.values.all { it in current })
+    }
+
+    @Test
+    fun sphl_scorebarTeamsAndRecords() {
+        val teams = checkNotNull(siteKit("sphl_teams.json").teams).map { it.toTeam(sphl) }
+        assertEquals(12, teams.size)
+        val fay = teams.single { it.abbreviation == "FAY" }
+        assertEquals("sphl-fay", fay.id)
+        assertEquals(Leagues.SPHL, fay.league)
+        // Not every SPHL logo is a PNG; the team list has the real file.
+        assertEquals("https://assets.leaguestat.com/sphl/logos/2.jpg", fay.logo?.light)
+
+        val games = checkNotNull(siteKit("sphl_scorebar.json").scorebar).associateBy { it.id }
+        val final = games.getValue("5886").toGame(sphl)
+        assertEquals("sphl-5886", final.id)
+        assertEquals(Leagues.SPHL, final.league)
+        assertEquals(3, final.awayScore)
+        assertEquals(4, final.homeScore)
+        assertEquals(GameStatus.Final(Decision.REGULATION), final.status)
+
+        // W-L-OTL, with Athens' shootout loss (4-4-0-1) counted as an overtime loss.
+        val upcoming = games.getValue("5889").toGame(sphl)
+        assertEquals("ATH", upcoming.home.abbreviation)
+        assertEquals("4-4-1", upcoming.homeRecord)
+    }
+
+    @Test
+    fun sphl_summary() {
+        val details = load<HockeyTechGameSummaryDto>("sphl_summary_final.json").toGameDetails(sphl, clock = null, suggestedRefresh = null)
+        assertEquals("sphl-5886", details.game.id)
+        assertEquals(GameStatus.Final(Decision.REGULATION), details.game.status)
+        assertEquals(7, details.goals.size)
+        assertEquals(3 to 4, details.goals.last().let { it.awayScore to it.homeScore })
+        assertEquals(4, details.goals.count { it.strength == GoalStrength.POWER_PLAY })
+        assertEquals(StatValue.Text("2/4"), details.teamStats.single { it.type == TeamStatType.POWER_PLAY }.home)
+        assertEquals("https://assets.leaguestat.com/sphl/logos/2.jpg", details.game.home.logo?.light)
+        assertEquals(emptyList<Any>(), details.radio)
     }
 }

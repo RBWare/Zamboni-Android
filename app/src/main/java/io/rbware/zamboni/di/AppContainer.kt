@@ -21,10 +21,10 @@ import io.rbware.zamboni.data.scores.FallbackScoresRepository
 import io.rbware.zamboni.data.scores.ApiKeyProvider
 import io.rbware.zamboni.data.scores.GamesheetNahlRepository
 import io.rbware.zamboni.data.scores.HockeyNerdScoresRepository
-import io.rbware.zamboni.data.scores.HockeyTechAhlRepository
+import io.rbware.zamboni.data.scores.HockeyTechLeague
+import io.rbware.zamboni.data.scores.HockeyTechRepository
 import io.rbware.zamboni.data.scores.MultiLeagueScoresRepository
 import io.rbware.zamboni.data.scores.apiGameIdOrNull
-import io.rbware.zamboni.data.scores.isAhlGameId
 import io.rbware.zamboni.data.scores.isNahlGameId
 import io.rbware.zamboni.data.scores.NhlScoresRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
@@ -110,34 +110,41 @@ class AppContainer(context: Context) {
         apiKey = gamesheetKeyProvider::current,
     )
 
+    /** One Retrofit client for every HockeyTech league; each call names its league. */
+    private val hockeyTechApi: HockeyTechApi = Retrofit.Builder()
+        .baseUrl(HockeyTechApi.BASE_URL)
+        .client(okHttpClient)
+        .build()
+        .create()
+
     /**
-     * The HockeyTech key for AHL data: the one entered in Settings, else the public key the
-     * AHL's own website uses.
+     * The HockeyTech keys for AHL and SPHL data: the one entered in Settings, else the public
+     * key the league's own website uses.
      */
-    val hockeyTechKeyProvider = ApiKeyProvider(
-        userPreferencesRepository.userPreferences.map { it.hockeyTechApiKey },
-        HockeyTechApi.AHL_PUBLIC_KEY,
+    val ahlKeyProvider = ApiKeyProvider(
+        userPreferencesRepository.userPreferences.map { it.ahlApiKey },
+        HockeyTechLeague.AHL.publicKey,
     )
 
-    val ahlRepository = HockeyTechAhlRepository(
-        api = Retrofit.Builder()
-            .baseUrl(HockeyTechApi.BASE_URL)
-            .client(okHttpClient)
-            .build()
-            .create(),
-        apiKey = hockeyTechKeyProvider::current,
+    val sphlKeyProvider = ApiKeyProvider(
+        userPreferencesRepository.userPreferences.map { it.sphlApiKey },
+        HockeyTechLeague.SPHL.publicKey,
     )
+
+    val ahlRepository = HockeyTechRepository(HockeyTechLeague.AHL, hockeyTechApi, ahlKeyProvider::current)
+
+    val sphlRepository = HockeyTechRepository(HockeyTechLeague.SPHL, hockeyTechApi, sphlKeyProvider::current)
 
     /** Static NHL teams. The NHL scores sources use it to fill in full team names. */
     private val placeholderTeamRepository = PlaceholderTeamRepository()
 
     // TODO: replace the NHL placeholder list with an API once specified.
     val teamRepository: TeamRepository =
-        CombinedTeamRepository(listOf(placeholderTeamRepository, ahlRepository, nahlRepository))
+        CombinedTeamRepository(listOf(placeholderTeamRepository, ahlRepository, sphlRepository, nahlRepository))
 
     /**
-     * NHL from the NHL API (hockeynerd.com as a fallback if it fails), the AHL from HockeyTech
-     * and the NAHL from Gamesheet. If one league fails to load, the others are still shown.
+     * NHL from the NHL API (hockeynerd.com as a fallback if it fails), the AHL and SPHL from
+     * HockeyTech and the NAHL from Gamesheet. If one league fails to load, the others are still shown.
      */
     val scoresRepository: ScoresRepository = MultiLeagueScoresRepository(
         sources = listOfNotNull(
@@ -149,7 +156,8 @@ class AppContainer(context: Context) {
                 ),
                 ownsGameId = { apiGameIdOrNull(it) != null },
             ),
-            MultiLeagueScoresRepository.Source(Leagues.AHL.id, ahlRepository, ::isAhlGameId),
+            MultiLeagueScoresRepository.Source(Leagues.AHL.id, ahlRepository, HockeyTechLeague.AHL::ownsGameId),
+            MultiLeagueScoresRepository.Source(Leagues.SPHL.id, sphlRepository, HockeyTechLeague.SPHL::ownsGameId),
             // Shows nothing (and no NAHL filter chip) while there is no Gamesheet key.
             MultiLeagueScoresRepository.Source(Leagues.NAHL.id, nahlRepository, ::isNahlGameId),
         ),

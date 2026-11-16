@@ -1,7 +1,7 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 2.2.1. Scores for the NHL, AHL and NAHL, hockey news from several feeds, a Social feed of
+Version 2.2.1. Scores for the NHL, AHL, SPHL and NAHL, hockey news from several feeds, a Social feed of
 Mastodon accounts and YouTube channels, game and news alerts, Live Updates and team radio for
 your favorite teams.
 
@@ -9,7 +9,7 @@ your favorite teams.
 - **Leagues**: follow only the leagues you care about (NHL by default), chosen in onboarding
   before favorite teams and changed any time in Settings. Turned-off leagues disappear from
   scores, teams, alerts and Live Updates; at least one stays on.
-- **Scores**: NHL, AHL and NAHL games by day, with favorites first and league filters. Live game
+- **Scores**: NHL, AHL, SPHL and NAHL games by day, with favorites first and league filters. Live game
   clocks count down every second between updates.
 - **Game details**: scoring by period, team stats, and "Where to watch": national and local
   TV and streaming broadcasts, and each team's radio broadcast to listen to in the app.
@@ -98,7 +98,7 @@ app/src/main/java/io/rbware/zamboni/
 |   |-- social/                  # built-in accounts, Mastodon/ActivityPub and YouTube clients, feed
 |   |-- logos/                   # NHL logo URLs and offline prefetch
 |   |-- preferences/             # DataStore-backed user choices + migrations
-|   `-- teams/                   # team lists for favorites (NHL placeholder data, AHL and NAHL from their APIs)
+|   `-- teams/                   # team lists for favorites (NHL placeholder data, others from their APIs)
 |-- notifications/               # background checks for alerts, Live Updates service, game mutes
 |-- radio/                       # team radio: playback service and the UI's player controls
 `-- ui/
@@ -126,6 +126,10 @@ Also: `docs/screenshots/` (README images).
 4. If its source needs a key, follow the HockeyTech or Gamesheet pattern (`ApiKeyProvider`,
    `ApiKeySection`) and show the Settings entry only while the league is on.
 
+A league on HockeyTech's feed needs no new repository: add a `HockeyTechLeague` (client code,
+the public key from the league's website, record format), then a `HockeyTechRepository`, key
+provider and Settings entry for it, as for the AHL and SPHL.
+
 ## Adding a news source
 Add one line to `data/news/NewsSources.kt`:
 ```kotlin
@@ -147,10 +151,11 @@ needs a partner API key. No key ships with the app: users enter their own under
 Settings > NAHL data (Gamesheet). The key is checked against Gamesheet before it is saved and
 is stored on the device only. Without a key the NAHL is left out (no games, teams or filter).
 
-AHL scores, game details and teams come from HockeyTech's LeagueStat feed
-(`lscluster.hockeytech.com`), the data behind theahl.com. It needs a key; the app uses the
-public one that theahl.com's own pages send. Users can enter another under
-Settings > AHL data (HockeyTech), which is checked the same way as a Gamesheet key.
+AHL and SPHL scores, game details and teams come from HockeyTech's LeagueStat feed
+(`lscluster.hockeytech.com`), the data behind theahl.com and thesphl.com. Each league needs its
+own key; the app uses the public one that the league's website sends (`HockeyTechLeague`).
+Users can enter another under Settings > AHL data or SPHL data (HockeyTech), which is checked
+the same way as a Gamesheet key.
 
 Notes on the HockeyTech data:
 - Days around today (one game day either way) come from the `scorebar` view, which is small
@@ -161,19 +166,13 @@ Notes on the HockeyTech data:
   `clock` tab.
 - A wrong key gets HTTP 200 with the text "Invalid key.", and `gameSummary` is wrapped in
   parentheses, so responses are parsed by hand (`decodeHockeyTech`).
-- Team IDs are "ahl-" plus HockeyTech's team code (e.g. `ahl-bel`). Version 1.0 had a
-  placeholder AHL list with a few different codes; `AhlTeamIdMigration` renames those favorites.
+- Team IDs are the league ID plus HockeyTech's team code (e.g. `ahl-bel`, `sphl-fay`), and
+  game IDs the league ID plus HockeyTech's game ID. Version 1.0 had a placeholder AHL list with
+  a few different codes; `AhlTeamIdMigration` renames those favorites.
+- Logo files are named by team ID but sometimes carry a season (`373_94.png`) or are JPEGs, so
+  the URLs from the team list are used rather than built.
+- Records are W-L-OTL-SOL for the AHL and W-L-OTL for the SPHL.
 - Faceoffs and hits aren't recorded in every rink, so they are left out when both read 0.
-
-For development, debug builds can have a Gamesheet key built in from `local.properties` (not
-committed):
-
-```
-gamesheet.apiKey=YOUR_KEY
-```
-
-Release builds never include it, even when `local.properties` has one. A key entered in
-Settings takes priority over the built-in one.
 
 Notes on the Gamesheet data:
 - Games, scores, goal scorers and team stats come from `stats/unifiedschedule` (the data
@@ -204,14 +203,9 @@ Notes on the Gamesheet data:
   minutes.
 - **Broadcasts and radio**: both come from the game's `landing` data (`tvBroadcasts` and each
   team's `radioLink`, an HLS stream). Network codes are expanded in `BroadcastNames`; unknown
-  codes are shown as they are. Not every team has a radio stream for every game. AHL teams
-  link to their broadcaster's web page instead (iHeartRadio, Mixlr...), which opens in the
+  codes are shown as they are. Not every team has a radio stream for every game. AHL and SPHL
+  teams link to their broadcaster's web page instead (iHeartRadio, Mixlr...), which opens in the
   browser.
-
-## Still to do
-- Teams: replace the placeholder NHL team list with data from an API.
-- AHL team colors: HockeyTech doesn't provide them, so AHL stat comparisons use the fallback
-  colors.
 
 ## Build
 ```sh
@@ -220,8 +214,7 @@ Notes on the Gamesheet data:
 ```
 
 ## Verifying a release
-Release APKs are signed with RBWare's key. The SHA-256 fingerprint of the signing certificate
-is:
+APKs in the releases tab are signed with the actual RBWare key. YOU SHOULD NOT TRUST THIS AND SIGN IT YOURSELF. As of right now, the SHA only exists here and my website is displaying github pages so I do not really have a good solution at the moment. I will update this at some point in the future. The SHA-256 fingerprint of the signing certificate is:
 
 ```
 io.rbware.zamboni

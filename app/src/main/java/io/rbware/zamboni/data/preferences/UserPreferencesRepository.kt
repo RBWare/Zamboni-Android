@@ -45,7 +45,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                     favoritesOnly = prefs[Keys.SCORES_FAVORITES_ONLY] ?: false,
                 ),
                 gamesheetApiKey = prefs[Keys.GAMESHEET_API_KEY]?.takeIf { it.isNotBlank() },
-                hockeyTechApiKey = prefs[Keys.HOCKEYTECH_API_KEY]?.takeIf { it.isNotBlank() },
+                ahlApiKey = prefs[Keys.AHL_API_KEY]?.takeIf { it.isNotBlank() },
+                sphlApiKey = prefs[Keys.SPHL_API_KEY]?.takeIf { it.isNotBlank() },
             )
         }
 
@@ -153,8 +154,11 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     /** Saves the user's Gamesheet key; null or blank removes it (falling back to the built-in key). */
     suspend fun setGamesheetApiKey(key: String?) = setKey(Keys.GAMESHEET_API_KEY, key)
 
-    /** Saves the user's HockeyTech key; null or blank removes it (falling back to the built-in key). */
-    suspend fun setHockeyTechApiKey(key: String?) = setKey(Keys.HOCKEYTECH_API_KEY, key)
+    /** Saves the user's HockeyTech key for the AHL; null or blank removes it (falling back to the built-in key). */
+    suspend fun setAhlApiKey(key: String?) = setKey(Keys.AHL_API_KEY, key)
+
+    /** Saves the user's HockeyTech key for the SPHL; null or blank removes it (falling back to the built-in key). */
+    suspend fun setSphlApiKey(key: String?) = setKey(Keys.SPHL_API_KEY, key)
 
     private suspend fun setKey(prefKey: Preferences.Key<String>, key: String?) {
         dataStore.edit { prefs ->
@@ -184,7 +188,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val SCORES_FAVORITES_FIRST = booleanPreferencesKey("scores_favorites_first")
         val SCORES_FAVORITES_ONLY = booleanPreferencesKey("scores_favorites_only")
         val GAMESHEET_API_KEY = stringPreferencesKey("gamesheet_api_key")
-        val HOCKEYTECH_API_KEY = stringPreferencesKey("hockeytech_api_key")
+        val AHL_API_KEY = stringPreferencesKey("ahl_api_key")
+        val SPHL_API_KEY = stringPreferencesKey("sphl_api_key")
     }
 }
 

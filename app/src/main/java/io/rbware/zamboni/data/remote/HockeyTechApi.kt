@@ -6,9 +6,10 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 /**
- * HockeyTech's LeagueStat feed (lscluster.hockeytech.com), the data behind theahl.com's scores
- * and game centers. Every request needs a key and a league's client code ("ahl"); the key is
- * passed per call because the user can change it in Settings.
+ * HockeyTech's LeagueStat feed (lscluster.hockeytech.com), the data behind theahl.com's and
+ * thesphl.com's scores and game centers. Every request needs a key and a league's client code
+ * ("ahl", "sphl"; see HockeyTechLeague); the key is passed per call because the user can change
+ * it in Settings.
  *
  * Responses are returned raw because the feed doesn't always send JSON: a wrong key gets HTTP
  * 200 with the text "Invalid key.", and the game summary comes wrapped in parentheses. See
@@ -96,15 +97,6 @@ interface HockeyTechApi {
     companion object {
         const val BASE_URL = "https://lscluster.hockeytech.com/"
         private const val PATH = "feed/index.php"
-
-        /** The AHL's client code. */
-        const val AHL = "ahl"
-
-        /**
-         * The key theahl.com's own pages use, which every visitor's browser sends. Users can
-         * enter another one in Settings.
-         */
-        const val AHL_PUBLIC_KEY = "50c2cd9b5e18e390"
 
         /** Lenient so new fields added to the feed don't break parsing. */
         val json = Json {

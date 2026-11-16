@@ -8,7 +8,7 @@ import io.rbware.zamboni.data.model.Team
 
 /**
  * Static NHL team list used for favorites until a hockeynerd.com teams endpoint is integrated.
- * (AHL teams come from HockeyTech, NAHL teams from Gamesheet.)
+ * (AHL and SPHL teams come from HockeyTech, NAHL teams from Gamesheet.)
  * NHL team IDs are "nhl-" plus the lowercase NHL abbreviation, matching what the schedule
  * endpoint returns, so favorites line up with real games.
  */

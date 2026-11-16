@@ -51,7 +51,12 @@ data class ApiKeyTexts(
     @param:StringRes val checkRejected: Int,
     @param:StringRes val checkFailed: Int,
     @param:StringRes val removeHint: Int,
+    /** Format arguments for every text above, e.g. the league's name. */
+    val args: List<String> = emptyList(),
 ) {
+    @Composable
+    fun text(@StringRes id: Int): String = stringResource(id, *args.toTypedArray())
+
     companion object {
         val Gamesheet = ApiKeyTexts(
             explanation = R.string.gamesheet_explanation,
@@ -64,7 +69,8 @@ data class ApiKeyTexts(
             removeHint = R.string.gamesheet_remove_hint,
         )
 
-        val HockeyTech = ApiKeyTexts(
+        /** For a HockeyTech league, named [league], whose public key comes from [website]. */
+        fun hockeyTech(league: String, website: String) = ApiKeyTexts(
             explanation = R.string.hockeytech_explanation,
             keyLabel = R.string.hockeytech_key_label,
             statusBuiltIn = R.string.hockeytech_status_built_in,
@@ -73,7 +79,11 @@ data class ApiKeyTexts(
             checkRejected = R.string.hockeytech_check_rejected,
             checkFailed = R.string.hockeytech_check_failed,
             removeHint = R.string.hockeytech_remove_hint,
+            args = listOf(league, website),
         )
+
+        val Ahl = hockeyTech("AHL", "theahl.com")
+        val Sphl = hockeyTech("SPHL", "thesphl.com")
     }
 }
 
@@ -81,8 +91,8 @@ data class ApiKeyTexts(
 @Composable
 fun apiKeySummary(state: ApiKeyUiState, texts: ApiKeyTexts): String = when (state.key.source) {
     ApiKeySource.USER -> stringResource(R.string.api_key_status_user, keySuffix(state.key.value))
-    ApiKeySource.BUILT_IN -> stringResource(texts.statusBuiltIn)
-    ApiKeySource.NONE -> stringResource(texts.statusNone)
+    ApiKeySource.BUILT_IN -> texts.text(texts.statusBuiltIn)
+    ApiKeySource.NONE -> texts.text(texts.statusNone)
 }
 
 /** The last few characters, so users can tell which key is saved without showing all of it. */
@@ -112,7 +122,7 @@ fun ApiKeySection(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(texts.explanation), style = MaterialTheme.typography.bodyMedium)
+        Text(texts.text(texts.explanation), style = MaterialTheme.typography.bodyMedium)
 
         OutlinedCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
@@ -124,7 +134,7 @@ fun ApiKeySection(
         OutlinedTextField(
             value = input,
             onValueChange = { input = it },
-            label = { Text(stringResource(texts.keyLabel)) },
+            label = { Text(texts.text(texts.keyLabel)) },
             singleLine = true,
             visualTransformation = if (showInput) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
@@ -154,7 +164,7 @@ fun ApiKeySection(
 
         state.lastCheck?.let { check ->
             Text(
-                stringResource(
+                texts.text(
                     when (check) {
                         ApiKeyCheck.VALID -> texts.checkValid
                         ApiKeyCheck.REJECTED -> texts.checkRejected
@@ -168,7 +178,7 @@ fun ApiKeySection(
 
         if (state.key.source == ApiKeySource.USER && state.key.value != null) {
             Text(
-                stringResource(texts.removeHint),
+                texts.text(texts.removeHint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
