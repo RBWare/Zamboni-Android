@@ -90,13 +90,16 @@ class ScoresViewModel(
     private val gamesLoad = MutableStateFlow(GamesLoad())
     private var loadJob: Job? = null
 
-    /** Changes when the Gamesheet key is set or cleared, which adds or removes the NAHL. */
-    private val gamesheetKeyChanges = userPreferencesRepository.userPreferences
-        .map { it.gamesheetApiKey }
+    /**
+     * Changes when a league is turned on or off, or a data source's key is set or cleared (which
+     * can add or remove a league).
+     */
+    private val keyChanges = userPreferencesRepository.userPreferences
+        .map { Triple(it.enabledLeagueIds, it.gamesheetApiKey, it.hockeyTechApiKey) }
         .distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val leagues = gamesheetKeyChanges.mapLatest { scoresRepository.getLeagues() }
+    private val leagues = keyChanges.mapLatest { scoresRepository.getLeagues() }
 
     val uiState: StateFlow<ScoresUiState> = combine(
         selectedDate,
@@ -104,15 +107,17 @@ class ScoresViewModel(
         userPreferencesRepository.userPreferences,
         leagues,
     ) { date, load, prefs, leagues ->
+        // A league picked in the filter that has since been turned off doesn't count.
+        val filter = prefs.scoresFilter.let { f -> f.copy(leagueIds = f.leagueIds.filterTo(mutableSetOf()) { id -> leagues.any { it.id == id } }) }
         ScoresUiState(
             date = date,
             today = today,
             leagues = leagues,
-            filter = prefs.scoresFilter,
+            filter = filter,
             favoriteTeamIds = prefs.favoriteTeamIds,
             games = load.games,
             sections = load.games?.let {
-                buildGameSections(it, leagues, prefs.favoriteTeamIds, prefs.scoresFilter)
+                buildGameSections(it, leagues, prefs.favoriteTeamIds, filter)
             }.orEmpty(),
             isRefreshing = load.isLoading && load.games != null,
             loadFailed = load.loadFailed,
@@ -126,8 +131,8 @@ class ScoresViewModel(
 
     init {
         load(clearExisting = true)
-        // Reload when the key changes, so NAHL games appear or disappear without a restart.
-        gamesheetKeyChanges.drop(1).onEach { load(clearExisting = false) }.launchIn(viewModelScope)
+        // Reload when leagues or keys change, so games appear or disappear without a restart.
+        keyChanges.drop(1).onEach { load(clearExisting = false) }.launchIn(viewModelScope)
     }
 
     fun selectDate(date: LocalDate) {

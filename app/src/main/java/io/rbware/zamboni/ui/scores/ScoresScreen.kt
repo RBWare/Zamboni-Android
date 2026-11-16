@@ -372,32 +372,35 @@ private fun FilterRow(state: ScoresUiState, actions: ScoresActions) {
                 },
             )
         }
-        item(key = "divider") { VerticalDivider(Modifier.height(24.dp)) }
-        item(key = "all") {
-            val selected = state.filter.leagueIds.isEmpty()
-            FilterChip(
-                selected = selected,
-                onClick = actions.onShowAllLeagues,
-                label = { Text(stringResource(R.string.scores_all_leagues)) },
-                leadingIcon = if (selected) {
-                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else {
-                    null
-                },
-            )
-        }
-        items(state.leagues, key = { it.id }) { league ->
-            val selected = league.id in state.filter.leagueIds
-            FilterChip(
-                selected = selected,
-                onClick = { actions.onToggleLeague(league) },
-                label = { Text(league.shortName) },
-                leadingIcon = if (selected) {
-                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else {
-                    null
-                },
-            )
+        // League chips only help when there's more than one league to choose from.
+        if (state.leagues.size > 1) {
+            item(key = "divider") { VerticalDivider(Modifier.height(24.dp)) }
+            item(key = "all") {
+                val selected = state.filter.leagueIds.isEmpty()
+                FilterChip(
+                    selected = selected,
+                    onClick = actions.onShowAllLeagues,
+                    label = { Text(stringResource(R.string.scores_all_leagues)) },
+                    leadingIcon = if (selected) {
+                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    } else {
+                        null
+                    },
+                )
+            }
+            items(state.leagues, key = { it.id }) { league ->
+                val selected = league.id in state.filter.leagueIds
+                FilterChip(
+                    selected = selected,
+                    onClick = { actions.onToggleLeague(league) },
+                    label = { Text(league.shortName) },
+                    leadingIcon = if (selected) {
+                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    } else {
+                        null
+                    },
+                )
+            }
         }
     }
 }

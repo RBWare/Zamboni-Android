@@ -33,8 +33,11 @@ data class Broadcast(
     val logo: TeamLogo?,
 )
 
-/** A team's radio broadcast as an audio stream (HLS). */
-data class RadioStream(val side: TeamSide, val url: String)
+/**
+ * A team's radio broadcast: an audio stream (HLS) that plays in the app, or, when [isWebPage],
+ * the broadcaster's web page (e.g. iHeartRadio), which opens in the browser.
+ */
+data class RadioStream(val side: TeamSide, val url: String, val isWebPage: Boolean = false)
 
 enum class TeamSide { AWAY, HOME }
 

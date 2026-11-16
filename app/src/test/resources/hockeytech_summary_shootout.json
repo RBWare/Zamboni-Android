@@ -1,0 +1,256 @@
+({
+ "details": {
+  "id": 1029323,
+  "date": "Sunday, November 15, 2026",
+  "gameNumber": "253",
+  "venue": "Acrisure Arena",
+  "attendance": 5771,
+  "startTime": "3:09 pm PST",
+  "endTime": "5:49 pm PST",
+  "duration": "2:40",
+  "gameReportUrl": "https://lscluster.hockeytech.com/game_reports/official-game-report.php?lang_id=1&client_code=ahl&game_id=1029323",
+  "textBoxscoreUrl": "https://lscluster.hockeytech.com/game_reports/text-game-report.php?lang_id=1&client_code=ahl&game_id=1029323",
+  "ticketsUrl": "https://theahl.com/tickets",
+  "started": "1",
+  "final": "1",
+  "publicNotes": "",
+  "status": "Final SO",
+  "seasonId": "94",
+  "floHockeyUrl": "https://flohockey.tv/events/16053122",
+  "GameDateISO8601": "2026-11-15T15:00:00-08:00",
+  "mvpType": 1,
+  "htvGameId": 1156028
+ },
+ "hasShootout": true,
+ "homeTeam": {
+  "info": {
+   "id": 445,
+   "name": "Coachella Valley Firebirds",
+   "city": "Coachella Valley",
+   "nickname": "Firebirds",
+   "abbreviation": "CV",
+   "logo": "https://assets.leaguestat.com/ahl/logos/445.png",
+   "divisionName": "Pacific Division"
+  },
+  "stats": {
+   "shots": 32,
+   "goals": 2,
+   "hits": 0,
+   "powerPlayGoals": 0,
+   "powerPlayOpportunities": 3,
+   "goalCount": 1,
+   "assistCount": 1,
+   "penaltyMinuteCount": 2,
+   "infractionCount": 1,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "https://www.connmediaplayer.com/1069theeagle",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "visitingTeam": {
+  "info": {
+   "id": 440,
+   "name": "Abbotsford Canucks",
+   "city": "Abbotsford",
+   "nickname": "Canucks",
+   "abbreviation": "ABB",
+   "logo": "https://assets.leaguestat.com/ahl/logos/440.png",
+   "divisionName": "Pacific Division"
+  },
+  "stats": {
+   "shots": 40,
+   "goals": 1,
+   "hits": 0,
+   "powerPlayGoals": 0,
+   "powerPlayOpportunities": 1,
+   "goalCount": 1,
+   "assistCount": 2,
+   "penaltyMinuteCount": 6,
+   "infractionCount": 3,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "https://abbotsford-canucks.mixlr.com/",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "periods": [
+  {
+   "info": {
+    "id": "1",
+    "shortName": "1",
+    "longName": "1st"
+   },
+   "stats": {
+    "homeGoals": "1",
+    "homeShots": "10",
+    "visitingGoals": "0",
+    "visitingShots": "7"
+   },
+   "goals": [
+    {
+     "game_goal_id": "155023",
+     "team": {
+      "id": 445,
+      "name": "Coachella Valley Firebirds",
+      "city": "Coachella Valley",
+      "nickname": "Firebirds",
+      "abbreviation": "CV",
+      "logo": "https://assets.leaguestat.com/ahl/logos/445.png",
+      "divisionName": "Pacific Division"
+     },
+     "period": {
+      "id": "1",
+      "shortName": "",
+      "longName": "1st"
+     },
+     "time": "1:00",
+     "scorerGoalNumber": "5",
+     "scoredBy": {
+      "id": 6306,
+      "firstName": "Mitchell",
+      "lastName": "Stephens",
+      "jerseyNumber": 67,
+      "position": "F",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/6306.jpg"
+     },
+     "assists": [
+      {
+       "id": 10190,
+       "firstName": "Tyson",
+       "lastName": "Jugnauth",
+       "jerseyNumber": 43,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/10190.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "16",
+      "0"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  },
+  {
+   "info": {
+    "id": "2",
+    "shortName": "2",
+    "longName": "2nd"
+   },
+   "stats": {
+    "homeGoals": "0",
+    "homeShots": "14",
+    "visitingGoals": "0",
+    "visitingShots": "14"
+   },
+   "goals": []
+  },
+  {
+   "info": {
+    "id": "3",
+    "shortName": "3",
+    "longName": "3rd"
+   },
+   "stats": {
+    "homeGoals": "0",
+    "homeShots": "4",
+    "visitingGoals": "1",
+    "visitingShots": "12"
+   },
+   "goals": [
+    {
+     "game_goal_id": "155033",
+     "team": {
+      "id": 440,
+      "name": "Abbotsford Canucks",
+      "city": "Abbotsford",
+      "nickname": "Canucks",
+      "abbreviation": "ABB",
+      "logo": "https://assets.leaguestat.com/ahl/logos/440.png",
+      "divisionName": "Pacific Division"
+     },
+     "period": {
+      "id": "3",
+      "shortName": "",
+      "longName": "3rd"
+     },
+     "time": "8:01",
+     "scorerGoalNumber": "1",
+     "scoredBy": {
+      "id": 7682,
+      "firstName": "Akil",
+      "lastName": "Thomas",
+      "jerseyNumber": 44,
+      "position": "C",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/7682.jpg"
+     },
+     "assists": [
+      {
+       "id": 7767,
+       "firstName": "Jimmy",
+       "lastName": "Schuldt",
+       "jerseyNumber": 48,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/7767.jpg"
+      },
+      {
+       "id": 10117,
+       "firstName": "Vilmer",
+       "lastName": "Alriksson",
+       "jerseyNumber": 46,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/10117.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "6",
+      "3"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  },
+  {
+   "info": {
+    "id": "4",
+    "shortName": "OT",
+    "longName": "OT"
+   },
+   "stats": {
+    "homeGoals": "0",
+    "homeShots": "3",
+    "visitingGoals": "0",
+    "visitingShots": "7"
+   },
+   "goals": []
+  }
+ ]
+})

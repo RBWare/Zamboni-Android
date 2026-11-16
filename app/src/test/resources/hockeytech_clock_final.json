@@ -1,0 +1,107 @@
+{
+ "GC": {
+  "Parameters": {
+   "client_code": "ahl"
+  },
+  "Clock": {
+   "period": "4",
+   "game_clock": "00:00:00",
+   "game_date_iso_8601": "2026-11-15T15:00:00-08:00",
+   "timezone": "America/Los_Angeles",
+   "timezone_short": "PST",
+   "started": "1",
+   "game_number": "253",
+   "season_id": "94",
+   "season_name": "2026-27 Regular Season",
+   "home_team": {
+    "name": "Coachella Valley Firebirds",
+    "team_id": "445",
+    "team_code": "CV",
+    "team_nickname": "Firebirds",
+    "team_city": "Coachella Valley"
+   },
+   "visiting_team": {
+    "name": "Abbotsford Canucks",
+    "team_id": "440",
+    "team_code": "ABB",
+    "team_nickname": "Canucks",
+    "team_city": "Abbotsford"
+   },
+   "text_game_summary": "/stats/text-game-report.php?game_id=1029323",
+   "official_game_report": "/stats/official-game-report.php?game_id=1029323",
+   "home_audio_url": "https://www.connmediaplayer.com/1069theeagle",
+   "home_video_url": "",
+   "home_webcast_url": "",
+   "visiting_audio_url": "https://abbotsford-canucks.mixlr.com/",
+   "visiting_video_url": "",
+   "visiting_webcast_url": "",
+   "tickets_url": "https://theahl.com/tickets",
+   "venue": "Acrisure Arena",
+   "final": "1",
+   "status": "4",
+   "home_goal_count": "2",
+   "visiting_goal_count": "1",
+   "progress": "Final SO",
+   "progress_short": "Final",
+   "period_name": "OT",
+   "home_lineup_card": "/game-lineups/ahl/1029323/CV_2026-11-15.pdf",
+   "visiting_lineup_card": "/game-lineups/ahl/1029323/ABB_2026-11-15.pdf",
+   "game_lineups": "/game-lineups/ahl/1029323/ABB@CV_2026-11-15.pdf",
+   "updated": {
+    "clock": 0,
+    "meta": 0,
+    "lineup": 0,
+    "goals": 0,
+    "penalties": 0,
+    "penaltyshots": 0,
+    "shots": 0,
+    "hits": 0,
+    "faceoffs": 0,
+    "pxp": 0,
+    "shootouts": 0,
+    "h2h": 0,
+    "pxpverbose": 0
+   },
+   "scoring": {
+    "home": {
+     "1": "1",
+     "2": "0",
+     "3": "0",
+     "4": "0",
+     "SO": "1"
+    },
+    "visiting": {
+     "1": "0",
+     "2": "0",
+     "3": "1",
+     "4": "0",
+     "SO": "0"
+    }
+   },
+   "shots_on_goal": {
+    "home": {
+     "1": 10,
+     "2": 14,
+     "3": 4,
+     "4": 3
+    },
+    "visiting": {
+     "1": 7,
+     "2": 14,
+     "3": 12,
+     "4": 7
+    }
+   },
+   "power_play": {
+    "total": {
+     "home": "3",
+     "visiting": "1"
+    },
+    "goals": {
+     "home": "0",
+     "visiting": "0"
+    }
+   }
+  }
+ }
+}

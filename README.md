@@ -1,12 +1,15 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 2.2.1. Scores for the NHL and NAHL, hockey news from several feeds, a Social feed of
+Version 2.2.1. Scores for the NHL, AHL and NAHL, hockey news from several feeds, a Social feed of
 Mastodon accounts and YouTube channels, game and news alerts, Live Updates and team radio for
 your favorite teams.
 
 ## Features
-- **Scores**: NHL and NAHL games by day, with favorites first and league filters. Live game
+- **Leagues**: follow only the leagues you care about (NHL by default), chosen in onboarding
+  before favorite teams and changed any time in Settings. Turned-off leagues disappear from
+  scores, teams, alerts and Live Updates; at least one stays on.
+- **Scores**: NHL, AHL and NAHL games by day, with favorites first and league filters. Live game
   clocks count down every second between updates.
 - **Game details**: scoring by period, team stats, and "Where to watch": national and local
   TV and streaming broadcasts, and each team's radio broadcast to listen to in the app.
@@ -89,13 +92,13 @@ app/src/main/java/io/rbware/zamboni/
 |-- di/AppContainer.kt           # manual DI: HTTP client, APIs, repositories
 |-- data/
 |   |-- model/                   # Game, Team, NewsArticle, ...
-|   |-- remote/                  # NHL, hockeynerd.com and Gamesheet APIs (Retrofit) and response models
+|   |-- remote/                  # NHL, hockeynerd.com, HockeyTech and Gamesheet APIs (Retrofit) and response models
 |   |-- scores/                  # schedule + game details repositories and mappers
 |   |-- news/                    # RSS sources, parser and repository
 |   |-- social/                  # built-in accounts, Mastodon/ActivityPub and YouTube clients, feed
 |   |-- logos/                   # NHL logo URLs and offline prefetch
 |   |-- preferences/             # DataStore-backed user choices + migrations
-|   `-- teams/                   # team list for favorites (placeholder data)
+|   `-- teams/                   # team lists for favorites (NHL placeholder data, AHL and NAHL from their APIs)
 |-- notifications/               # background checks for alerts, Live Updates service, game mutes
 |-- radio/                       # team radio: playback service and the UI's player controls
 `-- ui/
@@ -106,10 +109,22 @@ app/src/main/java/io/rbware/zamboni/
     |-- scores/                  # Scores tab: date, filters, game list and game detail
     |-- news/                    # News tab: articles from the chosen RSS sources
     |-- social/                  # Social tab: posts and videos from the chosen accounts
-    |-- settings/                # Settings tab: onboarding choices, Gamesheet key and About
+    |-- settings/                # Settings tab: onboarding choices, HockeyTech and Gamesheet keys, About
     `-- theme/                   # color scheme, typography, ZamboniTheme
 ```
 Also: `docs/screenshots/` (README images).
+
+## Adding a league
+1. Add it to `Leagues.all` in `data/leagues/Leagues.kt`. The ID is saved in user preferences:
+   keep it unique and never change it. It then appears in the league picker (onboarding and
+   Settings) and the Scores filter.
+2. Write a `ScoresRepository` for it (and a `TeamRepository` for its favorites list), with
+   game and team IDs that start with the league ID and a dash (e.g. `ahl-1029321`, `ahl-bel`).
+3. Register it in `AppContainer`: a `MultiLeagueScoresRepository.Source` with the league's ID,
+   and its team repository in `CombinedTeamRepository`. A league that's turned off is never
+   loaded, so it costs nothing until someone turns it on.
+4. If its source needs a key, follow the HockeyTech or Gamesheet pattern (`ApiKeyProvider`,
+   `ApiKeySection`) and show the Settings entry only while the league is on.
 
 ## Adding a news source
 Add one line to `data/news/NewsSources.kt`:
@@ -132,7 +147,26 @@ needs a partner API key. No key ships with the app: users enter their own under
 Settings > NAHL data (Gamesheet). The key is checked against Gamesheet before it is saved and
 is stored on the device only. Without a key the NAHL is left out (no games, teams or filter).
 
-For development, debug builds can have a key built in from `local.properties` (not committed):
+AHL scores, game details and teams come from HockeyTech's LeagueStat feed
+(`lscluster.hockeytech.com`), the data behind theahl.com. It needs a key; the app uses the
+public one that theahl.com's own pages send. Users can enter another under
+Settings > AHL data (HockeyTech), which is checked the same way as a Gamesheet key.
+
+Notes on the HockeyTech data:
+- Days around today (one game day either way) come from the `scorebar` view, which is small
+  and has live status. Other days come from the season's full `schedule`, which is about 2 MB
+  (150 KB gzipped), so it is kept for 30 minutes.
+- Game details come from `statviewfeed` `gameSummary` (goals with assists, strengths and season
+  totals, shots, power plays, penalty minutes), with the period and clock from the `gc` feed's
+  `clock` tab.
+- A wrong key gets HTTP 200 with the text "Invalid key.", and `gameSummary` is wrapped in
+  parentheses, so responses are parsed by hand (`decodeHockeyTech`).
+- Team IDs are "ahl-" plus HockeyTech's team code (e.g. `ahl-bel`). Version 1.0 had a
+  placeholder AHL list with a few different codes; `AhlTeamIdMigration` renames those favorites.
+- Faceoffs and hits aren't recorded in every rink, so they are left out when both read 0.
+
+For development, debug builds can have a Gamesheet key built in from `local.properties` (not
+committed):
 
 ```
 gamesheet.apiKey=YOUR_KEY
@@ -170,12 +204,14 @@ Notes on the Gamesheet data:
   minutes.
 - **Broadcasts and radio**: both come from the game's `landing` data (`tvBroadcasts` and each
   team's `radioLink`, an HLS stream). Network codes are expanded in `BroadcastNames`; unknown
-  codes are shown as they are. Not every team has a radio stream for every game.
+  codes are shown as they are. Not every team has a radio stream for every game. AHL teams
+  link to their broadcaster's web page instead (iHeartRadio, Mixlr...), which opens in the
+  browser.
 
 ## Still to do
-- Teams: replace the placeholder team list with data from an API.
-- AHL: turned off (`PlaceholderHockeyData.AHL_ENABLED`) until there is a scores source. The AHL
-  news feed is unaffected.
+- Teams: replace the placeholder NHL team list with data from an API.
+- AHL team colors: HockeyTech doesn't provide them, so AHL stat comparisons use the fallback
+  colors.
 
 ## Build
 ```sh

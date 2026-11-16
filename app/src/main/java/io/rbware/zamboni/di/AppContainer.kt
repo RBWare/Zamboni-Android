@@ -8,17 +8,23 @@ import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.news.NewsRepository
 import io.rbware.zamboni.data.news.RssNewsRepository
 import io.rbware.zamboni.data.news.StaticNewsSourceRepository
+import io.rbware.zamboni.data.leagues.Leagues
+import io.rbware.zamboni.data.preferences.AhlTeamIdMigration
+import io.rbware.zamboni.data.preferences.EnabledLeaguesMigration
 import io.rbware.zamboni.data.preferences.LegacyPreferencesMigration
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.remote.GamesheetApi
 import io.rbware.zamboni.data.remote.HockeyNerdApi
+import io.rbware.zamboni.data.remote.HockeyTechApi
 import io.rbware.zamboni.data.remote.NhlApi
 import io.rbware.zamboni.data.scores.FallbackScoresRepository
-import io.rbware.zamboni.data.scores.GamesheetKeyProvider
+import io.rbware.zamboni.data.scores.ApiKeyProvider
 import io.rbware.zamboni.data.scores.GamesheetNahlRepository
 import io.rbware.zamboni.data.scores.HockeyNerdScoresRepository
+import io.rbware.zamboni.data.scores.HockeyTechAhlRepository
 import io.rbware.zamboni.data.scores.MultiLeagueScoresRepository
 import io.rbware.zamboni.data.scores.apiGameIdOrNull
+import io.rbware.zamboni.data.scores.isAhlGameId
 import io.rbware.zamboni.data.scores.isNahlGameId
 import io.rbware.zamboni.data.scores.NhlScoresRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
@@ -33,6 +39,8 @@ import io.rbware.zamboni.notifications.AndroidLiveUpdateHost
 import io.rbware.zamboni.notifications.NotificationChecker
 import io.rbware.zamboni.notifications.NotificationStateStore
 import io.rbware.zamboni.notifications.Notifier
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -42,7 +50,7 @@ import java.util.concurrent.TimeUnit
 
 private val Context.userPreferencesDataStore by preferencesDataStore(
     name = "user_preferences",
-    produceMigrations = { listOf(LegacyPreferencesMigration) },
+    produceMigrations = { listOf(LegacyPreferencesMigration, AhlTeamIdMigration, EnabledLeaguesMigration) },
 )
 
 private val Context.notificationStateDataStore by preferencesDataStore(name = "notification_state")
@@ -87,7 +95,10 @@ class AppContainer(context: Context) {
      * The Gamesheet key for NAHL data: the one entered in Settings, else the one built into
      * debug builds from local.properties. Release builds have none built in.
      */
-    val gamesheetKeyProvider = GamesheetKeyProvider(userPreferencesRepository, BuildConfig.GAMESHEET_API_KEY)
+    val gamesheetKeyProvider = ApiKeyProvider(
+        userPreferencesRepository.userPreferences.map { it.gamesheetApiKey },
+        BuildConfig.GAMESHEET_API_KEY,
+    )
 
     val nahlRepository = GamesheetNahlRepository(
         api = Retrofit.Builder()
@@ -99,28 +110,50 @@ class AppContainer(context: Context) {
         apiKey = gamesheetKeyProvider::current,
     )
 
-    /** Static NHL teams (and AHL, when enabled in PlaceholderHockeyData). The NHL scores sources use it to fill in full team names. */
+    /**
+     * The HockeyTech key for AHL data: the one entered in Settings, else the public key the
+     * AHL's own website uses.
+     */
+    val hockeyTechKeyProvider = ApiKeyProvider(
+        userPreferencesRepository.userPreferences.map { it.hockeyTechApiKey },
+        HockeyTechApi.AHL_PUBLIC_KEY,
+    )
+
+    val ahlRepository = HockeyTechAhlRepository(
+        api = Retrofit.Builder()
+            .baseUrl(HockeyTechApi.BASE_URL)
+            .client(okHttpClient)
+            .build()
+            .create(),
+        apiKey = hockeyTechKeyProvider::current,
+    )
+
+    /** Static NHL teams. The NHL scores sources use it to fill in full team names. */
     private val placeholderTeamRepository = PlaceholderTeamRepository()
 
-    // TODO: replace the NHL and AHL placeholder list with an API once specified.
-    val teamRepository: TeamRepository = CombinedTeamRepository(listOf(placeholderTeamRepository, nahlRepository))
+    // TODO: replace the NHL placeholder list with an API once specified.
+    val teamRepository: TeamRepository =
+        CombinedTeamRepository(listOf(placeholderTeamRepository, ahlRepository, nahlRepository))
 
     /**
-     * NHL from the NHL API (hockeynerd.com as a fallback if it fails), plus the NAHL from
-     * Gamesheet. If one league fails to load, the other is still shown.
+     * NHL from the NHL API (hockeynerd.com as a fallback if it fails), the AHL from HockeyTech
+     * and the NAHL from Gamesheet. If one league fails to load, the others are still shown.
      */
     val scoresRepository: ScoresRepository = MultiLeagueScoresRepository(
         sources = listOfNotNull(
             MultiLeagueScoresRepository.Source(
+                leagueId = Leagues.NHL.id,
                 repository = FallbackScoresRepository(
                     primary = NhlScoresRepository(nhlApi, placeholderTeamRepository),
                     fallback = HockeyNerdScoresRepository(hockeyNerdApi, placeholderTeamRepository),
                 ),
                 ownsGameId = { apiGameIdOrNull(it) != null },
             ),
+            MultiLeagueScoresRepository.Source(Leagues.AHL.id, ahlRepository, ::isAhlGameId),
             // Shows nothing (and no NAHL filter chip) while there is no Gamesheet key.
-            MultiLeagueScoresRepository.Source(nahlRepository, ::isNahlGameId),
+            MultiLeagueScoresRepository.Source(Leagues.NAHL.id, nahlRepository, ::isNahlGameId),
         ),
+        enabledLeagueIds = { userPreferencesRepository.userPreferences.first().enabledLeagueIds },
         onLeagueFailed = { Log.w("Scores", "A league failed to load: $it") },
     )
 

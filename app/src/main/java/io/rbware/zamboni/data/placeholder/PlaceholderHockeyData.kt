@@ -7,23 +7,17 @@ import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.Team
 
 /**
- * Static team list used for favorites until a hockeynerd.com teams endpoint is integrated.
+ * Static NHL team list used for favorites until a hockeynerd.com teams endpoint is integrated.
+ * (AHL teams come from HockeyTech, NAHL teams from Gamesheet.)
  * NHL team IDs are "nhl-" plus the lowercase NHL abbreviation, matching what the schedule
  * endpoint returns, so favorites line up with real games.
  */
 object PlaceholderHockeyData {
     private val NHL = Leagues.NHL
-    private val AHL = Leagues.AHL
 
-    /**
-     * The AHL is turned off until it has a scores source: its teams are kept here but not offered
-     * as favorites. Saved AHL favorites are left alone and come back if this is switched on.
-     */
-    const val AHL_ENABLED = false
+    val leagues: List<League> = listOf(NHL)
 
-    val leagues: List<League> = if (AHL_ENABLED) listOf(NHL, AHL) else listOf(NHL)
-
-    val teams: List<Team> by lazy { nhlTeams + if (AHL_ENABLED) ahlTeams else emptyList() }
+    val teams: List<Team> by lazy { nhlTeams }
 
     private val nhlTeams: List<Team> by lazy {
         teamsFor(
@@ -63,44 +57,6 @@ object PlaceholderHockeyData {
         )
     }
 
-    private val ahlTeams: List<Team> by lazy {
-        teamsFor(
-            AHL,
-            "ABB" to "Abbotsford Canucks",
-            "BAK" to "Bakersfield Condors",
-            "BEL" to "Belleville Senators",
-            "BPT" to "Bridgeport Islanders",
-            "CGW" to "Calgary Wranglers",
-            "CLT" to "Charlotte Checkers",
-            "CHW" to "Chicago Wolves",
-            "CLE" to "Cleveland Monsters",
-            "CV" to "Coachella Valley Firebirds",
-            "COE" to "Colorado Eagles",
-            "GR" to "Grand Rapids Griffins",
-            "HFD" to "Hartford Wolf Pack",
-            "HSK" to "Henderson Silver Knights",
-            "HER" to "Hershey Bears",
-            "IA" to "Iowa Wild",
-            "LAV" to "Laval Rocket",
-            "LV" to "Lehigh Valley Phantoms",
-            "MB" to "Manitoba Moose",
-            "MIL" to "Milwaukee Admirals",
-            "ONT" to "Ontario Reign",
-            "PRO" to "Providence Bruins",
-            "ROC" to "Rochester Americans",
-            "RFD" to "Rockford IceHogs",
-            "SD" to "San Diego Gulls",
-            "SJ" to "San Jose Barracuda",
-            "SPR" to "Springfield Thunderbirds",
-            "SYR" to "Syracuse Crunch",
-            "TEX" to "Texas Stars",
-            "TOR" to "Toronto Marlies",
-            "TUC" to "Tucson Roadrunners",
-            "UTI" to "Utica Comets",
-            "WBS" to "Wilkes-Barre/Scranton Penguins",
-        )
-    }
-
     private fun teamsFor(league: League, vararg teams: Pair<String, String>): List<Team> =
         teams.map { (abbr, name) ->
             Team(
@@ -108,9 +64,8 @@ object PlaceholderHockeyData {
                 name = name,
                 abbreviation = abbr,
                 league = league,
-                // Only NHL logos are available so far; other leagues show the abbreviation.
-                logo = if (league == NHL) NhlLogos.forTeam(abbr) else null,
-                colors = if (league == NHL) NhlTeamColors.forTeam(abbr) else null,
+                logo = NhlLogos.forTeam(abbr),
+                colors = NhlTeamColors.forTeam(abbr),
             )
         }
 }

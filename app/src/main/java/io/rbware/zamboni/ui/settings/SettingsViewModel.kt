@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.rbware.zamboni.ZamboniApplication
+import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.NewsSource
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.MastodonHandle
@@ -16,11 +17,12 @@ import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.preferences.UserPreferences
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
 import io.rbware.zamboni.data.preferences.isSocialSourceEnabled
-import io.rbware.zamboni.data.scores.GamesheetKey
-import io.rbware.zamboni.data.scores.GamesheetKeyCheck
-import io.rbware.zamboni.data.scores.GamesheetKeyProvider
-import io.rbware.zamboni.data.scores.GamesheetKeySource
+import io.rbware.zamboni.data.scores.ApiKey
+import io.rbware.zamboni.data.scores.ApiKeyCheck
+import io.rbware.zamboni.data.scores.ApiKeyProvider
+import io.rbware.zamboni.data.scores.ApiKeySource
 import io.rbware.zamboni.data.scores.GamesheetNahlRepository
+import io.rbware.zamboni.data.scores.HockeyTechAhlRepository
 import io.rbware.zamboni.data.social.SocialAccountNotFoundException
 import io.rbware.zamboni.data.social.YouTubeChannelInput
 import io.rbware.zamboni.data.social.YouTubeClient
@@ -42,13 +44,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** State of the Gamesheet key editor. */
-data class GamesheetKeyUiState(
-    val key: GamesheetKey = GamesheetKey(null, GamesheetKeySource.NONE),
-    /** True while a key is being checked against the gateway. */
+/** State of a data source's key editor (Gamesheet or HockeyTech). */
+data class ApiKeyUiState(
+    val key: ApiKey = ApiKey(null, ApiKeySource.NONE),
+    /** True while a key is being checked against its source. */
     val checking: Boolean = false,
     /** Result of the last check, cleared when the key changes. */
-    val lastCheck: GamesheetKeyCheck? = null,
+    val lastCheck: ApiKeyCheck? = null,
 )
 
 enum class AddAccountError { INVALID, ALREADY_ADDED, NOT_FOUND, UNREACHABLE }
@@ -66,7 +68,8 @@ data class SettingsUiState(
     val teams: List<Team>? = null,
     val newsSources: List<NewsSource>? = null,
     val socialSources: List<SocialSource>? = null,
-    val gamesheet: GamesheetKeyUiState = GamesheetKeyUiState(),
+    val gamesheet: ApiKeyUiState = ApiKeyUiState(),
+    val hockeyTech: ApiKeyUiState = ApiKeyUiState(),
 )
 
 /** Edits the same choices made during onboarding, plus app-level settings. Changes are saved immediately. */
@@ -78,27 +81,66 @@ class SettingsViewModel(
     private val mastodonClient: MastodonClient,
     private val youTubeClient: YouTubeClient,
     private val userPreferencesRepository: UserPreferencesRepository,
-    gamesheetKeyProvider: GamesheetKeyProvider,
-    private val nahlRepository: GamesheetNahlRepository,
+    gamesheetKeyProvider: ApiKeyProvider,
+    nahlRepository: GamesheetNahlRepository,
+    hockeyTechKeyProvider: ApiKeyProvider,
+    ahlRepository: HockeyTechAhlRepository,
     private val notifier: Notifier,
 ) : ViewModel() {
 
-    private val keyCheck = MutableStateFlow<Pair<Boolean, GamesheetKeyCheck?>>(false to null)
-    private var checkJob: Job? = null
+    /** Checks and saves one source's key, tracking the check's progress and result. */
+    private inner class KeyEditor(
+        val provider: ApiKeyProvider,
+        private val check: suspend (String) -> ApiKeyCheck,
+        private val store: suspend (String?) -> Unit,
+    ) {
+        private val progress = MutableStateFlow<Pair<Boolean, ApiKeyCheck?>>(false to null)
+        private var job: Job? = null
+
+        val state = combine(provider.key, progress) { key, (checking, lastCheck) -> ApiKeyUiState(key, checking, lastCheck) }
+
+        /** Checks [key] and saves it unless the source rejects it (saved when unreachable, so offline users can still save). */
+        fun save(key: String) {
+            job?.cancel()
+            progress.value = true to null
+            job = viewModelScope.launch {
+                val result = check(key)
+                if (result != ApiKeyCheck.REJECTED) store(key)
+                progress.value = false to result
+            }
+        }
+
+        /** Removes the user's key, falling back to the built-in one (if there is one). */
+        fun clear() {
+            job?.cancel()
+            progress.value = false to null
+            viewModelScope.launch { store(null) }
+        }
+    }
+
+    private val gamesheetKey = KeyEditor(gamesheetKeyProvider, nahlRepository::checkKey, userPreferencesRepository::setGamesheetApiKey)
+    private val hockeyTechKey = KeyEditor(hockeyTechKeyProvider, ahlRepository::checkKey, userPreferencesRepository::setHockeyTechApiKey)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.userPreferences,
-        // Reload teams when the key changes, so NAHL teams appear once a key is entered.
-        gamesheetKeyProvider.key.flatMapLatest { flow { emit(null); emit(teamRepository.getTeams()) } },
+        // Reload teams when a key changes, so AHL and NAHL teams appear or disappear with it.
+        combine(gamesheetKeyProvider.key, hockeyTechKeyProvider.key) { a, b -> a to b }
+            .flatMapLatest { flow { emit(null); emit(teamRepository.getTeams()) } },
         combine(
             flow { emit(null); emit(newsSourceRepository.getSources()) },
             socialSourceRepository.sources,
         ) { news, social -> news to social },
-        gamesheetKeyProvider.key,
-        keyCheck,
-    ) { prefs, teams, (newsSources, socialSources), key, (checking, lastCheck) ->
-        SettingsUiState(prefs, teams, newsSources, socialSources, GamesheetKeyUiState(key, checking, lastCheck))
+        combine(gamesheetKey.state, hockeyTechKey.state) { a, b -> a to b },
+    ) { prefs, teams, (newsSources, socialSources), (gamesheet, hockeyTech) ->
+        // Teams of turned-off leagues are hidden (their favorites stay saved).
+        val shownTeams = teams?.filter { it.league.id in prefs.enabledLeagueIds }
+        SettingsUiState(prefs, shownTeams, newsSources, socialSources, gamesheet, hockeyTech)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
+
+    /** Turns a league on or off; the last one that's on stays on. */
+    fun toggleLeague(league: League) = viewModelScope.launch {
+        userPreferencesRepository.setLeagueEnabled(league.id, league.id !in uiState.value.preferences.enabledLeagueIds)
+    }
 
     fun toggleTeam(team: Team) = viewModelScope.launch {
         userPreferencesRepository.toggleFavoriteTeam(team.id)
@@ -219,23 +261,13 @@ class SettingsViewModel(
         return notifier.postTest(team)
     }
 
-    /** Checks [key] and saves it if Gamesheet accepts it (or can't be reached, so offline users can still save). */
-    fun saveGamesheetKey(key: String) {
-        checkJob?.cancel()
-        keyCheck.value = true to null
-        checkJob = viewModelScope.launch {
-            val result = nahlRepository.checkKey(key)
-            if (result != GamesheetKeyCheck.REJECTED) userPreferencesRepository.setGamesheetApiKey(key)
-            keyCheck.value = false to result
-        }
-    }
+    fun saveGamesheetKey(key: String) = gamesheetKey.save(key)
 
-    /** Removes the user's key, falling back to the built-in one (if this build has one). */
-    fun clearGamesheetKey() {
-        checkJob?.cancel()
-        keyCheck.value = false to null
-        viewModelScope.launch { userPreferencesRepository.setGamesheetApiKey(null) }
-    }
+    fun clearGamesheetKey() = gamesheetKey.clear()
+
+    fun saveHockeyTechKey(key: String) = hockeyTechKey.save(key)
+
+    fun clearHockeyTechKey() = hockeyTechKey.clear()
 
     companion object {
         val Factory = viewModelFactory {
@@ -250,6 +282,8 @@ class SettingsViewModel(
                     container.userPreferencesRepository,
                     container.gamesheetKeyProvider,
                     container.nahlRepository,
+                    container.hockeyTechKeyProvider,
+                    container.ahlRepository,
                     container.notifier,
                 )
             }

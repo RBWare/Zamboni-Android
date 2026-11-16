@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.model.MastodonHandle
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.SocialPlatform
@@ -28,6 +29,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         .map { prefs ->
             UserPreferences(
                 onboardingComplete = prefs[Keys.ONBOARDING_COMPLETE] ?: false,
+                enabledLeagueIds = prefs[Keys.ENABLED_LEAGUES]?.takeIf { it.isNotEmpty() } ?: Leagues.defaultEnabledIds,
                 favoriteTeamIds = prefs[Keys.FAVORITE_TEAMS].orEmpty(),
                 notificationTypes = prefs[Keys.NOTIFICATION_TYPES].orEmpty()
                     .mapNotNull { name -> NotificationType.entries.firstOrNull { it.name == name } }
@@ -43,11 +45,13 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                     favoritesOnly = prefs[Keys.SCORES_FAVORITES_ONLY] ?: false,
                 ),
                 gamesheetApiKey = prefs[Keys.GAMESHEET_API_KEY]?.takeIf { it.isNotBlank() },
+                hockeyTechApiKey = prefs[Keys.HOCKEYTECH_API_KEY]?.takeIf { it.isNotBlank() },
             )
         }
 
     /** Saves all onboarding choices and marks onboarding as done, atomically. */
     suspend fun completeOnboarding(
+        enabledLeagueIds: Set<String>,
         favoriteTeamIds: Set<String>,
         notificationTypes: Set<NotificationType>,
         newsSourceIds: Set<String>,
@@ -55,12 +59,22 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         enabledSocialSourceIds: Set<String>,
     ) {
         dataStore.edit { prefs ->
+            prefs[Keys.ENABLED_LEAGUES] = enabledLeagueIds.ifEmpty { Leagues.defaultEnabledIds }
             prefs[Keys.FAVORITE_TEAMS] = favoriteTeamIds
             prefs[Keys.NOTIFICATION_TYPES] = notificationTypes.mapTo(mutableSetOf()) { it.name }
             prefs[Keys.NEWS_SOURCES] = newsSourceIds
             prefs[Keys.DISABLED_SOCIAL_SOURCES] = disabledSocialSourceIds
             prefs[Keys.ENABLED_SOCIAL_SOURCES] = enabledSocialSourceIds
             prefs[Keys.ONBOARDING_COMPLETE] = true
+        }
+    }
+
+    /** Turns a league on or off. Turning off the last league that's on does nothing. */
+    suspend fun setLeagueEnabled(leagueId: String, enabled: Boolean) {
+        dataStore.edit { prefs ->
+            val current = prefs[Keys.ENABLED_LEAGUES]?.takeIf { it.isNotEmpty() } ?: Leagues.defaultEnabledIds
+            val updated = if (enabled) current + leagueId else current - leagueId
+            if (updated.isNotEmpty()) prefs[Keys.ENABLED_LEAGUES] = updated
         }
     }
 
@@ -137,10 +151,15 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     /** Saves the user's Gamesheet key; null or blank removes it (falling back to the built-in key). */
-    suspend fun setGamesheetApiKey(key: String?) {
+    suspend fun setGamesheetApiKey(key: String?) = setKey(Keys.GAMESHEET_API_KEY, key)
+
+    /** Saves the user's HockeyTech key; null or blank removes it (falling back to the built-in key). */
+    suspend fun setHockeyTechApiKey(key: String?) = setKey(Keys.HOCKEYTECH_API_KEY, key)
+
+    private suspend fun setKey(prefKey: Preferences.Key<String>, key: String?) {
         dataStore.edit { prefs ->
             val trimmed = key?.trim()
-            if (trimmed.isNullOrEmpty()) prefs.remove(Keys.GAMESHEET_API_KEY) else prefs[Keys.GAMESHEET_API_KEY] = trimmed
+            if (trimmed.isNullOrEmpty()) prefs.remove(prefKey) else prefs[prefKey] = trimmed
         }
     }
 
@@ -153,6 +172,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
 
     internal object Keys {
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val ENABLED_LEAGUES = stringSetPreferencesKey("enabled_league_ids")
         val FAVORITE_TEAMS = stringSetPreferencesKey("favorite_team_ids")
         val NOTIFICATION_TYPES = stringSetPreferencesKey("notification_types")
         val NEWS_SOURCES = stringSetPreferencesKey("news_source_ids")
@@ -164,6 +184,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val SCORES_FAVORITES_FIRST = booleanPreferencesKey("scores_favorites_first")
         val SCORES_FAVORITES_ONLY = booleanPreferencesKey("scores_favorites_only")
         val GAMESHEET_API_KEY = stringPreferencesKey("gamesheet_api_key")
+        val HOCKEYTECH_API_KEY = stringPreferencesKey("hockeytech_api_key")
     }
 }
 

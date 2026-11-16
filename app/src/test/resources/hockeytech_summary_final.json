@@ -1,0 +1,344 @@
+({
+ "details": {
+  "id": 1029321,
+  "date": "Sunday, November 15, 2026",
+  "gameNumber": "251",
+  "venue": "CIBC Place",
+  "attendance": 2001,
+  "startTime": "1:05 pm EST",
+  "endTime": "3:25 pm EST",
+  "duration": "2:20",
+  "gameReportUrl": "https://lscluster.hockeytech.com/game_reports/official-game-report.php?lang_id=1&client_code=ahl&game_id=1029321",
+  "textBoxscoreUrl": "https://lscluster.hockeytech.com/game_reports/text-game-report.php?lang_id=1&client_code=ahl&game_id=1029321",
+  "ticketsUrl": "https://theahl.com/tickets",
+  "started": "1",
+  "final": "1",
+  "publicNotes": "",
+  "status": "Final",
+  "seasonId": "94",
+  "floHockeyUrl": "https://flohockey.tv/events/16053270",
+  "GameDateISO8601": "2026-11-15T13:00:00-05:00",
+  "mvpType": 1,
+  "htvGameId": 1156249
+ },
+ "hasShootout": false,
+ "homeTeam": {
+  "info": {
+   "id": 413,
+   "name": "Belleville Senators",
+   "city": "Belleville",
+   "nickname": "Senators",
+   "abbreviation": "BEL",
+   "logo": "https://assets.leaguestat.com/ahl/logos/413.png",
+   "divisionName": "North Division"
+  },
+  "stats": {
+   "shots": 22,
+   "goals": 3,
+   "hits": 0,
+   "powerPlayGoals": 1,
+   "powerPlayOpportunities": 4,
+   "goalCount": 3,
+   "assistCount": 4,
+   "penaltyMinuteCount": 13,
+   "infractionCount": 5,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "visitingTeam": {
+  "info": {
+   "id": 373,
+   "name": "Cleveland Monsters",
+   "city": "Cleveland",
+   "nickname": "Monsters",
+   "abbreviation": "CLE",
+   "logo": "https://assets.leaguestat.com/ahl/logos/373_94.png",
+   "divisionName": "North Division"
+  },
+  "stats": {
+   "shots": 16,
+   "goals": 1,
+   "hits": 0,
+   "powerPlayGoals": 1,
+   "powerPlayOpportunities": 3,
+   "goalCount": 1,
+   "assistCount": 1,
+   "penaltyMinuteCount": 15,
+   "infractionCount": 6,
+   "faceoffAttempts": 0,
+   "faceoffWins": 0,
+   "faceoffWinPercentage": 0
+  },
+  "media": {
+   "audioUrl": "http://www.iheart.com/live/sportsradio-991-5382",
+   "videoUrl": "",
+   "webcastUrl": ""
+  }
+ },
+ "periods": [
+  {
+   "info": {
+    "id": "1",
+    "shortName": "1",
+    "longName": "1st"
+   },
+   "stats": {
+    "homeGoals": "1",
+    "homeShots": "6",
+    "visitingGoals": "0",
+    "visitingShots": "6"
+   },
+   "goals": [
+    {
+     "game_goal_id": "154997",
+     "team": {
+      "id": 413,
+      "name": "Belleville Senators",
+      "city": "Belleville",
+      "nickname": "Senators",
+      "abbreviation": "BEL",
+      "logo": "https://assets.leaguestat.com/ahl/logos/413.png",
+      "divisionName": "North Division"
+     },
+     "period": {
+      "id": "1",
+      "shortName": "",
+      "longName": "1st"
+     },
+     "time": "7:47",
+     "scorerGoalNumber": "5",
+     "scoredBy": {
+      "id": 8987,
+      "firstName": "Tyler",
+      "lastName": "Boucher",
+      "jerseyNumber": 16,
+      "position": "RW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/8987.jpg"
+     },
+     "assists": [
+      {
+       "id": 8861,
+       "firstName": "Philippe",
+       "lastName": "Daoust",
+       "jerseyNumber": 10,
+       "position": "C",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/8861.jpg"
+      },
+      {
+       "id": 8437,
+       "firstName": "Ryan",
+       "lastName": "Suzuki",
+       "jerseyNumber": 6,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/8437.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "10",
+      "9"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  },
+  {
+   "info": {
+    "id": "2",
+    "shortName": "2",
+    "longName": "2nd"
+   },
+   "stats": {
+    "homeGoals": "0",
+    "homeShots": "9",
+    "visitingGoals": "1",
+    "visitingShots": "6"
+   },
+   "goals": [
+    {
+     "game_goal_id": "154999",
+     "team": {
+      "id": 373,
+      "name": "Cleveland Monsters",
+      "city": "Cleveland",
+      "nickname": "Monsters",
+      "abbreviation": "CLE",
+      "logo": "https://assets.leaguestat.com/ahl/logos/373_94.png",
+      "divisionName": "North Division"
+     },
+     "period": {
+      "id": "2",
+      "shortName": "",
+      "longName": "2nd"
+     },
+     "time": "17:13",
+     "scorerGoalNumber": "4",
+     "scoredBy": {
+      "id": 9978,
+      "firstName": "James",
+      "lastName": "Malatesta",
+      "jerseyNumber": 11,
+      "position": "LW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/9978.jpg"
+     },
+     "assists": [
+      {
+       "id": 9025,
+       "firstName": "Roman",
+       "lastName": "Ahcan",
+       "jerseyNumber": 37,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/9025.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "4",
+      "0"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  },
+  {
+   "info": {
+    "id": "3",
+    "shortName": "3",
+    "longName": "3rd"
+   },
+   "stats": {
+    "homeGoals": "2",
+    "homeShots": "7",
+    "visitingGoals": "0",
+    "visitingShots": "4"
+   },
+   "goals": [
+    {
+     "game_goal_id": "155000",
+     "team": {
+      "id": 413,
+      "name": "Belleville Senators",
+      "city": "Belleville",
+      "nickname": "Senators",
+      "abbreviation": "BEL",
+      "logo": "https://assets.leaguestat.com/ahl/logos/413.png",
+      "divisionName": "North Division"
+     },
+     "period": {
+      "id": "3",
+      "shortName": "",
+      "longName": "3rd"
+     },
+     "time": "9:23",
+     "scorerGoalNumber": "11",
+     "scoredBy": {
+      "id": 10231,
+      "firstName": "Kasper",
+      "lastName": "Halttunen",
+      "jerseyNumber": 12,
+      "position": "LW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/10231.jpg"
+     },
+     "assists": [],
+     "assistNumbers": [
+      "0",
+      "0"
+     ],
+     "properties": {
+      "isPowerPlay": "0",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "0",
+      "isGameWinningGoal": "1"
+     }
+    },
+    {
+     "game_goal_id": "155001",
+     "team": {
+      "id": 413,
+      "name": "Belleville Senators",
+      "city": "Belleville",
+      "nickname": "Senators",
+      "abbreviation": "BEL",
+      "logo": "https://assets.leaguestat.com/ahl/logos/413.png",
+      "divisionName": "North Division"
+     },
+     "period": {
+      "id": "3",
+      "shortName": "",
+      "longName": "3rd"
+     },
+     "time": "10:42",
+     "scorerGoalNumber": "4",
+     "scoredBy": {
+      "id": 8437,
+      "firstName": "Ryan",
+      "lastName": "Suzuki",
+      "jerseyNumber": 6,
+      "position": "LW",
+      "birthDate": "",
+      "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/8437.jpg"
+     },
+     "assists": [
+      {
+       "id": 9963,
+       "firstName": "Christian",
+       "lastName": "Kyrou",
+       "jerseyNumber": 15,
+       "position": "D",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/9963.jpg"
+      },
+      {
+       "id": 10231,
+       "firstName": "Kasper",
+       "lastName": "Halttunen",
+       "jerseyNumber": 12,
+       "position": "LW",
+       "birthDate": "",
+       "playerImageURL": "https://assets.leaguestat.com/ahl/120x160/10231.jpg"
+      }
+     ],
+     "assistNumbers": [
+      "9",
+      "4"
+     ],
+     "properties": {
+      "isPowerPlay": "1",
+      "isShortHanded": "0",
+      "isEmptyNet": "0",
+      "isPenaltyShot": "0",
+      "isInsuranceGoal": "1",
+      "isGameWinningGoal": "0"
+     }
+    }
+   ]
+  }
+ ]
+})

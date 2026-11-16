@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.SportsHockey
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -63,9 +64,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rbware.zamboni.BuildConfig
 import io.rbware.zamboni.R
+import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.SocialSource
 import io.rbware.zamboni.data.preferences.isSocialSourceEnabled
+import io.rbware.zamboni.data.scores.ApiKeySource
 import io.rbware.zamboni.notifications.TestNotificationResult
 import io.rbware.zamboni.notifications.appNotificationSettingsIntent
 import io.rbware.zamboni.notifications.channelSettingsIntent
@@ -74,19 +77,23 @@ import io.rbware.zamboni.ui.components.GroupedListItem
 import io.rbware.zamboni.ui.components.TonalIcon
 import io.rbware.zamboni.ui.components.groupHeader
 import io.rbware.zamboni.ui.components.groupedItemShape
+import io.rbware.zamboni.ui.preferences.LeaguePicker
 import io.rbware.zamboni.ui.preferences.NewsSourcePicker
 import io.rbware.zamboni.ui.preferences.SwitchRow
 import io.rbware.zamboni.ui.preferences.TeamPicker
+import io.rbware.zamboni.ui.preferences.leagueNotes
 import io.rbware.zamboni.ui.preferences.rememberNotificationPermissionRequester
 import io.rbware.zamboni.ui.preferences.rememberNotificationsAllowed
 import kotlinx.coroutines.launch
 
 /** A settings page that opens in the detail pane. */
 enum class SettingsSection(@param:StringRes val title: Int, val icon: ImageVector) {
+    LEAGUES(R.string.settings_leagues, Icons.Outlined.SportsHockey),
     TEAMS(R.string.settings_favorite_teams, Icons.Outlined.Star),
     NOTIFICATIONS(R.string.settings_notifications, Icons.Outlined.Notifications),
     NEWS_SOURCES(R.string.settings_news_sources, Icons.Outlined.Newspaper),
     SOCIAL_SOURCES(R.string.settings_social_sources, Icons.Outlined.Forum),
+    HOCKEYTECH(R.string.settings_hockeytech, Icons.Outlined.Key),
     GAMESHEET(R.string.settings_gamesheet, Icons.Outlined.Key),
     ABOUT(R.string.settings_about, Icons.Outlined.Info),
 }
@@ -207,8 +214,20 @@ fun SettingsScreen(
                             onRemove = removeSocialSource,
                             onAdd = viewModel::openAddAccount,
                         )
-                        SettingsSection.GAMESHEET -> GamesheetKeySection(
+                        SettingsSection.LEAGUES -> LeaguePicker(
+                            selectedIds = state.preferences.enabledLeagueIds,
+                            onToggle = viewModel::toggleLeague,
+                            notes = leagueNotes(nahlNeedsKey = state.gamesheet.key.source == ApiKeySource.NONE),
+                        )
+                        SettingsSection.HOCKEYTECH -> ApiKeySection(
+                            state = state.hockeyTech,
+                            texts = ApiKeyTexts.HockeyTech,
+                            onSave = viewModel::saveHockeyTechKey,
+                            onClear = viewModel::clearHockeyTechKey,
+                        )
+                        SettingsSection.GAMESHEET -> ApiKeySection(
                             state = state.gamesheet,
+                            texts = ApiKeyTexts.Gamesheet,
                             onSave = viewModel::saveGamesheetKey,
                             onClear = viewModel::clearGamesheetKey,
                         )
@@ -243,9 +262,10 @@ private fun SettingsList(
 
     @Composable
     fun summaryOf(section: SettingsSection): String = when (section) {
+        SettingsSection.LEAGUES -> Leagues.all.filter { it.id in prefs.enabledLeagueIds }.joinToString(", ") { it.shortName }
         SettingsSection.TEAMS -> countSummary(
             R.plurals.settings_teams_summary,
-            // Only count teams that can be picked (e.g. not AHL teams while it is off).
+            // Only count teams that can be picked (not in a turned-off league, or NAHL without a key).
             state.teams?.count { it.id in prefs.favoriteTeamIds } ?: prefs.favoriteTeamIds.size,
         )
         SettingsSection.NOTIFICATIONS ->
@@ -263,7 +283,8 @@ private fun SettingsList(
             R.plurals.settings_social_summary,
             state.socialSources?.count { prefs.isSocialSourceEnabled(it) } ?: 0,
         )
-        SettingsSection.GAMESHEET -> gamesheetKeySummary(state.gamesheet)
+        SettingsSection.HOCKEYTECH -> apiKeySummary(state.hockeyTech, ApiKeyTexts.HockeyTech)
+        SettingsSection.GAMESHEET -> apiKeySummary(state.gamesheet, ApiKeyTexts.Gamesheet)
         SettingsSection.ABOUT -> stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME)
     }
 
@@ -309,7 +330,7 @@ private fun SettingsList(
             if (!notificationsAllowed && prefs.notificationTypes.isNotEmpty()) {
                 item(key = "notifications-blocked") { NotificationsBlockedCard(onAllowNotifications) }
             }
-            sectionGroup(R.string.settings_group_teams, listOf(SettingsSection.TEAMS, SettingsSection.NOTIFICATIONS))
+            sectionGroup(R.string.settings_group_teams, listOf(SettingsSection.LEAGUES, SettingsSection.TEAMS, SettingsSection.NOTIFICATIONS))
             sectionGroup(R.string.settings_group_feeds, listOf(SettingsSection.NEWS_SOURCES, SettingsSection.SOCIAL_SOURCES))
             // Wallpaper colors only exist on Android 12+.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -325,7 +346,12 @@ private fun SettingsList(
                     )
                 }
             }
-            sectionGroup(R.string.settings_group_data, listOf(SettingsSection.GAMESHEET))
+            // Each data source's key only matters while its league is on.
+            val dataSections = buildList {
+                if (Leagues.AHL.id in prefs.enabledLeagueIds) add(SettingsSection.HOCKEYTECH)
+                if (Leagues.NAHL.id in prefs.enabledLeagueIds) add(SettingsSection.GAMESHEET)
+            }
+            if (dataSections.isNotEmpty()) sectionGroup(R.string.settings_group_data, dataSections)
             sectionGroup(R.string.settings_group_about, listOf(SettingsSection.ABOUT))
         }
     }

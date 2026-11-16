@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +41,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.rbware.zamboni.R
+import io.rbware.zamboni.data.leagues.Leagues
+import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.NewsSource
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.SocialPlatform
@@ -128,6 +132,53 @@ private fun TeamCard(team: Team, selected: Boolean, onClick: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * On/off switch for each league in [Leagues.all]. The last league that's on can't be turned
+ * off: its switch still looks on (a disabled switch looks almost off), and tapping it
+ * highlights the hint below instead. [notes] replaces a league's subtitle, e.g. to say it needs
+ * a key.
+ */
+@Composable
+fun LeaguePicker(
+    selectedIds: Set<String>,
+    onToggle: (League) -> Unit,
+    modifier: Modifier = Modifier,
+    notes: Map<String, String> = emptyMap(),
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+) {
+    val onCount = Leagues.all.count { it.id in selectedIds }
+    var blocked by remember { mutableStateOf(false) }
+    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
+        groupedItems(Leagues.all, key = { it.id }) { league, shape ->
+            val on = league.id in selectedIds
+            SwitchRow(
+                shape = shape,
+                title = league.name,
+                subtitle = notes[league.id] ?: league.shortName,
+                checked = on,
+                onToggle = {
+                    blocked = on && onCount <= 1
+                    if (!blocked) onToggle(league)
+                },
+            )
+        }
+        item(key = "leagues-hint") {
+            Text(
+                stringResource(R.string.leagues_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (blocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+/** Subtitles for [LeaguePicker] that explain why a league may show nothing yet. */
+@Composable
+fun leagueNotes(nahlNeedsKey: Boolean): Map<String, String> = buildMap {
+    if (nahlNeedsKey) put(Leagues.NAHL.id, stringResource(R.string.leagues_needs_gamesheet_key))
 }
 
 /** On/off switch for each [NotificationType], as one group. */

@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.rbware.zamboni.ZamboniApplication
+import io.rbware.zamboni.data.leagues.Leagues
+import io.rbware.zamboni.data.model.League
 import io.rbware.zamboni.data.model.NewsSource
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.SocialSource
 import io.rbware.zamboni.data.model.Team
 import io.rbware.zamboni.data.news.NewsSourceRepository
 import io.rbware.zamboni.data.preferences.UserPreferencesRepository
+import io.rbware.zamboni.data.scores.ApiKeyProvider
 import io.rbware.zamboni.data.social.SocialSourceRepository
 import io.rbware.zamboni.data.teams.TeamRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,11 +23,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class OnboardingStep { WELCOME, TEAMS, NOTIFICATIONS, NEWS, SOCIAL }
+enum class OnboardingStep { WELCOME, LEAGUES, TEAMS, NOTIFICATIONS, NEWS, SOCIAL }
 
 data class OnboardingUiState(
     val step: OnboardingStep = OnboardingStep.WELCOME,
+    /** Every team of every league; see [visibleTeams]. */
     val teams: List<Team>? = null,
+    val selectedLeagueIds: Set<String> = Leagues.defaultEnabledIds,
+    /** No Gamesheet key, so NAHL teams and games can't load until one is entered in Settings. */
+    val nahlNeedsKey: Boolean = false,
     val newsSources: List<NewsSource>? = null,
     val socialSources: List<SocialSource>? = null,
     val selectedTeamIds: Set<String> = emptySet(),
@@ -35,8 +42,23 @@ data class OnboardingUiState(
     val isFirstStep get() = step.ordinal == 0
     val isLastStep get() = step.ordinal == OnboardingStep.entries.lastIndex
 
-    /** At least one favorite team is required; notifications, news and social are optional. */
-    val canAdvance get() = step != OnboardingStep.TEAMS || selectedTeamIds.isNotEmpty()
+    /** Teams of the chosen leagues, or null while loading. */
+    val visibleTeams: List<Team>? get() = teams?.filter { it.league.id in selectedLeagueIds }
+
+    /** Favorites among [visibleTeams]: picks in a league that was turned off again don't count. */
+    val effectiveTeamIds: Set<String>
+        get() = visibleTeams.orEmpty().mapNotNullTo(mutableSetOf()) { team -> team.id.takeIf { it in selectedTeamIds } }
+
+    /**
+     * At least one league, and one favorite team when the chosen leagues have any (a league whose
+     * teams need a key may have none yet). Notifications, news and social are optional.
+     */
+    val canAdvance
+        get() = when (step) {
+            OnboardingStep.LEAGUES -> selectedLeagueIds.isNotEmpty()
+            OnboardingStep.TEAMS -> visibleTeams?.let { it.isEmpty() || effectiveTeamIds.isNotEmpty() } ?: false
+            else -> true
+        }
 }
 
 /**
@@ -48,12 +70,17 @@ class OnboardingViewModel(
     private val newsSourceRepository: NewsSourceRepository,
     private val socialSourceRepository: SocialSourceRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val gamesheetKeyProvider: ApiKeyProvider,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            val needsKey = gamesheetKeyProvider.current() == null
+            _uiState.update { it.copy(nahlNeedsKey = needsKey) }
+        }
         viewModelScope.launch {
             val teams = teamRepository.getTeams()
             _uiState.update { it.copy(teams = teams) }
@@ -86,6 +113,12 @@ class OnboardingViewModel(
         if (state.isFirstStep) state else state.copy(step = OnboardingStep.entries[state.step.ordinal - 1])
     }
 
+    /** Turns a league on or off; the last one that's on stays on. */
+    fun toggleLeague(league: League) = _uiState.update { state ->
+        val updated = state.selectedLeagueIds.toggle(league.id)
+        if (updated.isEmpty()) state else state.copy(selectedLeagueIds = updated)
+    }
+
     fun toggleTeam(team: Team) = _uiState.update { it.copy(selectedTeamIds = it.selectedTeamIds.toggle(team.id)) }
 
     fun toggleNotification(type: NotificationType) =
@@ -109,7 +142,8 @@ class OnboardingViewModel(
         val state = _uiState.value
         viewModelScope.launch {
             userPreferencesRepository.completeOnboarding(
-                favoriteTeamIds = state.selectedTeamIds,
+                enabledLeagueIds = state.selectedLeagueIds,
+                favoriteTeamIds = state.effectiveTeamIds,
                 notificationTypes = state.notificationTypes,
                 newsSourceIds = state.newsSourceIds,
                 // Only changes from each account's default are saved, so accounts added in later
@@ -133,6 +167,7 @@ class OnboardingViewModel(
                     container.newsSourceRepository,
                     container.socialSourceRepository,
                     container.userPreferencesRepository,
+                    container.gamesheetKeyProvider,
                 )
             }
         }

@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
@@ -94,7 +95,7 @@ class SocialViewModel(
                 }
         }
         viewModelScope.launch {
-            val teams = try {
+            val allTeams = try {
                 teamRepository.getTeams()
             } catch (e: CancellationException) {
                 throw e
@@ -102,7 +103,13 @@ class SocialViewModel(
                 // Without teams the empty state just leaves out the team row.
                 emptyList()
             }
-            _uiState.update { it.copy(teams = teams) }
+            // Only teams of leagues that are on, following changes made in Settings.
+            userPreferencesRepository.userPreferences
+                .map { it.enabledLeagueIds }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    _uiState.update { state -> state.copy(teams = allTeams.filter { it.league.id in enabled }) }
+                }
         }
     }
 

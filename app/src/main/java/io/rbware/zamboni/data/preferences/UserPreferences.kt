@@ -1,10 +1,16 @@
 package io.rbware.zamboni.data.preferences
 
+import io.rbware.zamboni.data.leagues.Leagues
 import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.data.model.SocialSource
 
 data class UserPreferences(
     val onboardingComplete: Boolean = false,
+    /**
+     * Leagues the user follows. Others are left out everywhere: scores, teams, alerts and Live
+     * Updates. Never empty. Favorites in a turned-off league are kept for when it comes back.
+     */
+    val enabledLeagueIds: Set<String> = Leagues.defaultEnabledIds,
     val favoriteTeamIds: Set<String> = emptySet(),
     val notificationTypes: Set<NotificationType> = emptySet(),
     val newsSourceIds: Set<String> = emptySet(),
@@ -22,6 +28,8 @@ data class UserPreferences(
     val scoresFilter: ScoresFilter = ScoresFilter(),
     /** Gamesheet partner key entered in Settings, or null to use the one built into the app (if any). */
     val gamesheetApiKey: String? = null,
+    /** HockeyTech key entered in Settings, or null to use the AHL website's public one. */
+    val hockeyTechApiKey: String? = null,
 )
 
 /** How the Scores list is filtered and ordered. Persisted so it sticks between launches. */

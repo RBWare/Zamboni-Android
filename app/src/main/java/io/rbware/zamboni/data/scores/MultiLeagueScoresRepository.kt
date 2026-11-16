@@ -14,20 +14,32 @@ import java.time.LocalDate
  * leagues fail, the others are still shown (the failure goes to [onLeagueFailed]), and only if
  * every league fails is an error thrown.
  *
- * @param sources each repository and a test for whether an app game ID belongs to it, used to
- *   route [getGameDetails].
+ * Leagues the user turned off ([enabledLeagueIds]) aren't loaded at all, so they also produce no
+ * alerts or Live Updates. Game details are still served for any league, e.g. for a game opened
+ * from an older notification.
+ *
+ * @param sources each league's repository and a test for whether an app game ID belongs to it,
+ *   used to route [getGameDetails].
  */
 class MultiLeagueScoresRepository(
     private val sources: List<Source>,
+    private val enabledLeagueIds: suspend () -> Set<String> = { sources.mapTo(mutableSetOf()) { it.leagueId } },
     private val onLeagueFailed: (error: Exception) -> Unit = {},
 ) : ScoresRepository {
 
-    class Source(val repository: ScoresRepository, val ownsGameId: (String) -> Boolean)
+    class Source(val leagueId: String, val repository: ScoresRepository, val ownsGameId: (String) -> Boolean)
 
-    override suspend fun getLeagues(): List<League> = sources.flatMap { it.repository.getLeagues() }
+    private suspend fun enabledSources(): List<Source> {
+        val enabled = enabledLeagueIds()
+        return sources.filter { it.leagueId in enabled }
+    }
+
+    override suspend fun getLeagues(): List<League> = enabledSources().flatMap { it.repository.getLeagues() }
 
     override suspend fun getSchedule(date: LocalDate): Schedule = coroutineScope {
-        val results = sources.map { source ->
+        val active = enabledSources()
+        if (active.isEmpty()) return@coroutineScope Schedule(date = date, games = emptyList())
+        val results = active.map { source ->
             async {
                 try {
                     Result.success(source.repository.getSchedule(date))

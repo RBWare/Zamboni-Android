@@ -36,10 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rbware.zamboni.R
+import io.rbware.zamboni.ui.preferences.LeaguePicker
 import io.rbware.zamboni.ui.preferences.NewsSourcePicker
 import io.rbware.zamboni.ui.preferences.NotificationPicker
 import io.rbware.zamboni.ui.preferences.SocialSourcePicker
 import io.rbware.zamboni.ui.preferences.TeamPicker
+import io.rbware.zamboni.ui.preferences.leagueNotes
 import io.rbware.zamboni.ui.preferences.rememberNotificationPermissionRequester
 
 /** Max content width so onboarding doesn't stretch edge-to-edge on tablets / unfolded foldables. */
@@ -91,8 +93,24 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
                 ) { step ->
                     when (step) {
                         OnboardingStep.WELCOME -> WelcomeStep()
+                        OnboardingStep.LEAGUES -> StepScaffold(R.string.onboarding_leagues_title, R.string.onboarding_leagues_body) {
+                            LeaguePicker(
+                                selectedIds = state.selectedLeagueIds,
+                                onToggle = viewModel::toggleLeague,
+                                notes = leagueNotes(nahlNeedsKey = state.nahlNeedsKey),
+                            )
+                        }
                         OnboardingStep.TEAMS -> StepScaffold(R.string.onboarding_teams_title, R.string.onboarding_teams_body) {
-                            TeamPicker(state.teams, state.selectedTeamIds, viewModel::toggleTeam)
+                            if (state.visibleTeams?.isEmpty() == true) {
+                                Text(
+                                    stringResource(R.string.onboarding_teams_none),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                            } else {
+                                TeamPicker(state.visibleTeams, state.selectedTeamIds, viewModel::toggleTeam)
+                            }
                         }
                         OnboardingStep.NOTIFICATIONS -> StepScaffold(
                             R.string.onboarding_notifications_title,
@@ -108,8 +126,8 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
                                 sources = state.socialSources,
                                 selectedIds = state.socialSourceIds,
                                 onToggle = viewModel::toggleSocialSource,
-                                teams = state.teams.orEmpty(),
-                                favoriteTeamIds = state.selectedTeamIds,
+                                teams = state.visibleTeams.orEmpty(),
+                                favoriteTeamIds = state.effectiveTeamIds,
                                 onToggleTeam = viewModel::toggleTeamAccounts,
                             )
                         }

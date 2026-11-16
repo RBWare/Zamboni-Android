@@ -44,13 +44,35 @@ class MultiLeagueScoresRepositoryTest {
 
     private val failures = mutableListOf<Exception>()
 
-    private fun repo(nhl: ScoresRepository, nahl: ScoresRepository) = MultiLeagueScoresRepository(
+    private fun repo(
+        nhl: ScoresRepository,
+        nahl: ScoresRepository,
+        enabled: Set<String> = setOf(Leagues.NHL.id, Leagues.NAHL.id),
+    ) = MultiLeagueScoresRepository(
         listOf(
-            MultiLeagueScoresRepository.Source(nhl) { it.startsWith("nhl-") },
-            MultiLeagueScoresRepository.Source(nahl) { it.startsWith("nahl-") },
+            MultiLeagueScoresRepository.Source(Leagues.NHL.id, nhl) { it.startsWith("nhl-") },
+            MultiLeagueScoresRepository.Source(Leagues.NAHL.id, nahl) { it.startsWith("nahl-") },
         ),
+        enabledLeagueIds = { enabled },
         onLeagueFailed = { failures += it },
     )
+
+    @Test
+    fun turnedOffLeague_isNotLoaded() = runBlocking {
+        val nhl = Fake(Leagues.NHL, Schedule(date, listOf(game("nhl-2", Leagues.NHL, "2026-11-15T00:00:00Z"))))
+        // Would throw if it were asked.
+        val nahl = Fake(Leagues.NAHL, error = IOException("must not be loaded"))
+        val repo = repo(nhl, nahl, enabled = setOf(Leagues.NHL.id))
+        assertEquals(listOf("nhl-2"), repo.getSchedule(date).games.map { it.id })
+        assertEquals(listOf(Leagues.NHL), repo.getLeagues())
+        assertEquals(emptyList<Exception>(), failures)
+    }
+
+    @Test
+    fun noLoadableLeague_isAnEmptyDay() = runBlocking {
+        val schedule = repo(Fake(Leagues.NHL), Fake(Leagues.NAHL), enabled = setOf("other")).getSchedule(date)
+        assertEquals(emptyList<Game>(), schedule.games)
+    }
 
     @Test
     fun mergesSchedulesInStartOrder() = runBlocking {

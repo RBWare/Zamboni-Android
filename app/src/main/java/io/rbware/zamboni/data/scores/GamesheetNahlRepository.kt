@@ -24,9 +24,6 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-/** Result of checking a Gamesheet key. */
-enum class GamesheetKeyCheck { VALID, REJECTED, FAILED }
-
 /**
  * NAHL scores, game details and teams from Gamesheet.
  *
@@ -95,15 +92,15 @@ class GamesheetNahlRepository(
     }
 
     /** Checks [key] against the gateway without saving or caching anything. */
-    suspend fun checkKey(key: String): GamesheetKeyCheck = try {
+    suspend fun checkKey(key: String): ApiKeyCheck = try {
         val response = api.getMyClub(key.trim(), clubNid)
-        if (response.status == "success") GamesheetKeyCheck.VALID else GamesheetKeyCheck.REJECTED
+        if (response.status == "success") ApiKeyCheck.VALID else ApiKeyCheck.REJECTED
     } catch (e: CancellationException) {
         throw e
     } catch (e: HttpException) {
-        if (e.code() == 401 || e.code() == 403) GamesheetKeyCheck.REJECTED else GamesheetKeyCheck.FAILED
+        if (e.code() == 401 || e.code() == 403) ApiKeyCheck.REJECTED else ApiKeyCheck.FAILED
     } catch (e: Exception) {
-        GamesheetKeyCheck.FAILED
+        ApiKeyCheck.FAILED
     }
 
     private suspend fun seasons(key: String): List<GamesheetSeasonDto> {

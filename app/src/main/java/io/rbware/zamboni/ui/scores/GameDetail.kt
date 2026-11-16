@@ -1,6 +1,9 @@
 package io.rbware.zamboni.ui.scores
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -57,12 +61,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,10 +97,10 @@ import io.rbware.zamboni.radio.RadioPlayer
 import io.rbware.zamboni.radio.radioMediaId
 import io.rbware.zamboni.ui.LocalShownGame
 import io.rbware.zamboni.ui.components.TeamBadge
-import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 
 private val MaxContentWidth = 640.dp
 private val HeaderLogoSize = 64.dp
@@ -676,6 +682,10 @@ private fun BroadcastLogo(broadcast: Broadcast) {
 
 @Composable
 private fun RadioRow(stream: RadioStream, team: Team, game: Game, player: RadioPlayer) {
+    if (stream.isWebPage) {
+        RadioLinkRow(stream, team)
+        return
+    }
     val state = player.state
     val mediaId = radioMediaId(game.id, stream.side.name)
     val isThis = state.mediaId == mediaId
@@ -712,6 +722,33 @@ private fun RadioRow(stream: RadioStream, team: Team, game: Game, player: RadioP
                 )
             }
         },
+    )
+}
+
+/** A radio broadcast that only has a web page (most AHL teams'), opened in the browser. */
+@Composable
+private fun RadioLinkRow(stream: RadioStream, team: Team) {
+    val context = LocalContext.current
+    val open = {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, stream.url.toUri()))
+        } catch (_: ActivityNotFoundException) {
+            // No app can open links; nothing more to do.
+        }
+    }
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.watch_radio_title, team.name)) },
+        supportingContent = { Text(stringResource(R.string.watch_radio_web)) },
+        leadingContent = { TeamBadge(team, size = 32.dp) },
+        trailingContent = {
+            FilledTonalIconButton(onClick = open) {
+                Icon(
+                    Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = stringResource(R.string.watch_radio_open, team.name),
+                )
+            }
+        },
+        modifier = Modifier.clickable(onClick = open),
     )
 }
 
