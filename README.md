@@ -218,3 +218,22 @@ Notes on the Gamesheet data:
 ./gradlew assembleDebug        # debug build installs as io.rbware.zamboni.debug
 ./gradlew testDebugUnitTest
 ```
+
+## Verifying a release
+Release APKs are signed with RBWare's key. The SHA-256 fingerprint of the signing certificate
+is:
+
+```
+io.rbware.zamboni
+BB:8A:51:22:AF:65:45:D3:58:D8:08:0E:EF:F7:E3:31:7D:8B:24:EC:25:6B:9A:15:4F:A6:BF:22:23:CB:91:C3
+```
+
+Check a downloaded APK with `apksigner` (Android SDK build-tools):
+
+```sh
+apksigner verify --print-certs app-release.apk
+```
+
+The "certificate SHA-256 digest" line should read
+`bb8a5122af6545d358d8080eeff7e3317d8b24ec256b9a154fa6bf2223cb91c3`. Apps such as AppVerifier can check an installed copy against the
+fingerprint above.
