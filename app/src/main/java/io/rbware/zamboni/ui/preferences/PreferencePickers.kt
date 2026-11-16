@@ -2,6 +2,7 @@ package io.rbware.zamboni.ui.preferences
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,34 +12,44 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.rbware.zamboni.data.model.NewsSource
 import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.model.SocialPlatform
+import io.rbware.zamboni.data.model.SocialSource
 import io.rbware.zamboni.data.model.Team
+import io.rbware.zamboni.ui.components.GroupedListItem
 import io.rbware.zamboni.ui.components.TeamBadge
+import io.rbware.zamboni.ui.components.TonalIcon
+import io.rbware.zamboni.ui.components.groupHeader
+import io.rbware.zamboni.ui.components.groupedItems
 
 /*
  * Selection UIs shared by onboarding and Settings so both always look and behave the same.
@@ -119,7 +130,7 @@ private fun TeamCard(team: Team, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-/** On/off switch for each [NotificationType]. */
+/** On/off switch for each [NotificationType], as one group. */
 @Composable
 fun NotificationPicker(
     selected: Set<NotificationType>,
@@ -128,19 +139,24 @@ fun NotificationPicker(
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
 ) {
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        items(NotificationType.entries, key = { it.name }) { type ->
-            val checked = type in selected
-            ListItem(
-                headlineContent = { Text(stringResource(type.label)) },
-                supportingContent = { Text(stringResource(type.description)) },
-                trailingContent = { Switch(checked = checked, onCheckedChange = null) },
-                modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = { onToggle(type) }),
-            )
-        }
+        notificationTypeItems(selected, onToggle)
     }
 }
 
-/** Checkbox list of available RSS sources. */
+/** The rows of [NotificationPicker], for screens that add their own items around them. */
+fun LazyListScope.notificationTypeItems(selected: Set<NotificationType>, onToggle: (NotificationType) -> Unit) {
+    groupedItems(NotificationType.entries, key = { it.name }) { type, shape ->
+        SwitchRow(
+            shape = shape,
+            title = stringResource(type.label),
+            subtitle = stringResource(type.description),
+            checked = type in selected,
+            onToggle = { onToggle(type) },
+        )
+    }
+}
+
+/** On/off switch for each available RSS source. */
 @Composable
 fun NewsSourcePicker(
     sources: List<NewsSource>?,
@@ -154,16 +170,77 @@ fun NewsSourcePicker(
         return
     }
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        items(sources, key = { it.id }) { source ->
-            val checked = source.id in selectedIds
-            ListItem(
-                headlineContent = { Text(source.name) },
-                supportingContent = sourceHost(source.feedUrl)?.let { host -> { Text(host) } },
-                leadingContent = { Checkbox(checked = checked, onCheckedChange = null) },
-                modifier = Modifier.toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle(source) }),
+        groupedItems(sources, key = { it.id }) { source, shape ->
+            SwitchRow(
+                shape = shape,
+                title = source.name,
+                subtitle = sourceHost(source.feedUrl),
+                checked = source.id in selectedIds,
+                onToggle = { onToggle(source) },
             )
         }
     }
+}
+
+/** On/off switch for each built-in social account, by platform, then featured and category groups. */
+@Composable
+fun SocialSourcePicker(
+    sources: List<SocialSource>?,
+    selectedIds: Set<String>,
+    onToggle: (SocialSource) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+) {
+    if (sources == null) {
+        LoadingBox(modifier)
+        return
+    }
+    // Only platforms that have built-in accounts; the switch appears once there's a choice.
+    val platforms = SocialPlatform.entries.filter { builtInSocialGroups(sources, it).isNotEmpty() }
+    var platform by rememberSaveable { mutableStateOf(platforms.firstOrNull() ?: SocialPlatform.MASTODON) }
+    Column(modifier.fillMaxSize()) {
+        if (platforms.size > 1) PlatformSelector(platforms, platform, onSelect = { platform = it })
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+            builtInSocialGroups(sources, platform).forEach { group ->
+                groupHeader(group.title, key = group.key)
+                groupedItems(group.sources, key = { it.id }) { source, shape ->
+                    SwitchRow(
+                        shape = shape,
+                        title = source.name,
+                        subtitle = source.handle,
+                        checked = source.id in selectedIds,
+                        onToggle = { onToggle(source) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** A grouped row with a trailing switch; the whole row toggles it. */
+@Composable
+fun SwitchRow(
+    shape: Shape,
+    title: String,
+    checked: Boolean,
+    onToggle: () -> Unit,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+) {
+    GroupedListItem(
+        shape = shape,
+        headlineContent = { Text(title) },
+        supportingContent = subtitle?.let { { Text(it) } },
+        leadingContent = icon?.let { { TonalIcon(it) } },
+        trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
+        modifier = Modifier.toggleable(
+            value = checked,
+            enabled = enabled,
+            role = Role.Switch,
+            onValueChange = { onToggle() },
+        ),
+    )
 }
 
 /** "thehockeywriters.com" from a feed URL, to show where a source comes from. */

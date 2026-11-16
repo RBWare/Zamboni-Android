@@ -82,7 +82,7 @@ fun ArticleCard(article: NewsArticle, onClick: () -> Unit, modifier: Modifier = 
 }
 
 /** "5 minutes ago", "3 hours ago", "Yesterday", ... */
-private fun relativeTime(epochMillis: Long): String =
+internal fun relativeTime(epochMillis: Long): String =
     DateUtils.getRelativeTimeSpanString(
         epochMillis,
         System.currentTimeMillis(),

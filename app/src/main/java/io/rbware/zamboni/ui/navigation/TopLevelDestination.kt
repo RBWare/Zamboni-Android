@@ -2,9 +2,11 @@ package io.rbware.zamboni.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Scoreboard
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Scoreboard
 import androidx.compose.material.icons.outlined.Settings
@@ -19,5 +21,6 @@ enum class TopLevelDestination(
 ) {
     SCORES(R.string.nav_scores, Icons.Filled.Scoreboard, Icons.Outlined.Scoreboard),
     NEWS(R.string.nav_news, Icons.Filled.Newspaper, Icons.Outlined.Newspaper),
+    SOCIAL(R.string.nav_social, Icons.Filled.Forum, Icons.Outlined.Forum),
     SETTINGS(R.string.nav_settings, Icons.Filled.Settings, Icons.Outlined.Settings),
 }

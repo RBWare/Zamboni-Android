@@ -3,6 +3,7 @@
 
     <string name="nav_scores">Scores</string>
     <string name="nav_news">News</string>
+    <string name="nav_social">Social</string>
     <string name="nav_settings">Settings</string>
 
     <!-- Scores -->
@@ -87,6 +88,27 @@
     <string name="settings_favorite_teams">Favorite teams</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_news_sources">News sources</string>
+    <string name="settings_social_sources">Social accounts</string>
+    <string name="settings_group_teams">Teams and alerts</string>
+    <string name="settings_group_feeds">Feeds</string>
+    <string name="settings_group_appearance">Appearance</string>
+    <string name="settings_group_data">Data sources</string>
+    <string name="settings_group_about">About</string>
+    <string name="settings_notifications_summary_blocked">Blocked in system settings</string>
+    <string name="settings_notifications_alerts">Alerts</string>
+    <string name="settings_notifications_more">More</string>
+    <string name="settings_notifications_blocked_title">Notifications are blocked</string>
+    <string name="settings_notifications_blocked_body">You won\'t get game or news alerts until notifications are allowed for Zamboni.</string>
+    <string name="settings_notifications_allow">Open settings</string>
+    <string name="settings_notifications_footer">Zamboni checks for updates in the background: every couple of minutes while your teams are playing. Alerts can arrive a few minutes late while your phone is idle.</string>
+    <string name="settings_test_notification">Send a test notification</string>
+    <string name="settings_test_notification_summary">See how a goal alert looks and sounds</string>
+    <string name="settings_test_sent">Test notification sent</string>
+    <string name="settings_test_app_blocked">Notifications are turned off for Zamboni</string>
+    <string name="settings_test_channel_blocked">Goal alerts are turned off in system settings</string>
+    <string name="settings_open_system_settings">Settings</string>
+    <string name="settings_system_notifications">System notification settings</string>
+    <string name="settings_system_notifications_summary">Sound, vibration and pop-ups for each alert type</string>
     <string name="settings_select_section">Select a setting to change it</string>
     <string name="settings_none_selected">None selected</string>
     <plurals name="settings_teams_summary">
@@ -96,6 +118,10 @@
     <plurals name="settings_notifications_summary">
         <item quantity="one">%d type enabled</item>
         <item quantity="other">%d types enabled</item>
+    </plurals>
+    <plurals name="settings_social_summary">
+        <item quantity="one">%d account</item>
+        <item quantity="other">%d accounts</item>
     </plurals>
     <plurals name="settings_news_summary">
         <item quantity="one">%d source</item>
@@ -123,6 +149,7 @@
     <string name="settings_about_summary">Version %1$s</string>
     <string name="about_version_value">%1$s (%2$d)</string>
     <string name="about_package">Package name</string>
+    <string name="about_tagline">Scores, news and alerts for your teams</string>
     <string name="about_developer">Developed by</string>
     <string name="about_developer_name" translatable="false">RBWare</string>
     <string name="back">Back</string>
@@ -136,7 +163,9 @@
     <string name="onboarding_notifications_title">Stay in the loop</string>
     <string name="onboarding_notifications_body">Choose which updates you\'d like to get for your teams.</string>
     <string name="onboarding_news_title">Choose your news</string>
-    <string name="onboarding_news_body">Select the sources to show in the News tab.</string>
+    <string name="onboarding_social_title">Follow the conversation</string>
+    <string name="onboarding_social_body">Featured accounts are on. Turn on any others you want in the Social tab.</string>
+    <string name="onboarding_news_body">Turn off any sources you don\'t want in the News tab.</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_back">Back</string>
@@ -150,5 +179,68 @@
     <string name="notification_final_score">Final score</string>
     <string name="notification_final_score_desc">The result when a game ends</string>
     <string name="notification_breaking_news">Breaking news</string>
-    <string name="notification_breaking_news_desc">Major stories from your news sources</string>
+    <string name="notification_breaking_news_desc">New stories about your teams from your news sources</string>
+
+    <!-- Posted notifications -->
+    <string name="notif_matchup">%1$s at %2$s</string>
+    <string name="notif_game_started">The game has started</string>
+    <string name="notif_goal_title">Goal! %1$s</string>
+    <string name="notif_goals_title">Goals: %1$s</string>
+    <string name="notif_final_title_winner">Final: %1$s win</string>
+    <string name="notif_final_title">Final: %1$s</string>
+    <!-- Away abbreviation and score, then home, e.g. "TOR 2, MTL 1". -->
+    <string name="notif_score_line">%1$s %2$d, %3$s %4$d</string>
+    <!-- Goal scorer and their season goal total, e.g. "Auston Matthews (12)". -->
+    <string name="notif_scorer">%1$s (%2$d)</string>
+    <string name="notif_test_title">Zamboni test alert</string>
+    <string name="notif_test_body">Test notification: this is how your goal alerts will look.</string>
+
+    <!-- Social (placeholder until feeds are built) -->
+    <string name="social_no_sources">No social accounts selected</string>
+    <string name="social_choose_sources">Choose accounts</string>
+    <string name="social_no_posts">No posts right now</string>
+    <string name="social_load_failed">Couldn\'t load posts</string>
+    <string name="social_sources_failed">Couldn\'t load: %1$s</string>
+    <string name="social_all_sources">All accounts</string>
+    <string name="social_boosted">%1$s boosted</string>
+    <string name="social_content_warning">Content warning: %1$s</string>
+    <string name="social_group_yours">Your accounts</string>
+    <string name="social_group_featured">Featured</string>
+    <string name="social_group_leagues">Leagues</string>
+    <string name="social_group_teams">Teams</string>
+    <string name="social_group_reporters">Reporters and analysts</string>
+    <string name="social_group_media">Media</string>
+    <string name="social_group_personalities">Personalities</string>
+    <string name="social_group_other">Other</string>
+    <string name="social_settings_footer">Built-in accounts can be turned on or off. Accounts you add can also be removed.</string>
+    <string name="social_add_mastodon">Add Mastodon account</string>
+    <string name="social_add_mastodon_label">Account</string>
+    <string name="social_add_mastodon_placeholder">\@user\@mastodon.social</string>
+    <string name="social_add_mastodon_hint">Its full address, or a link to its profile</string>
+    <string name="social_add_error_invalid">Enter an address like \@user\@mastodon.social</string>
+    <string name="social_add_error_exists">That account is already in your list</string>
+    <string name="social_add_error_not_found">No account with that address</string>
+    <string name="social_add_error_unreachable">Couldn\'t check that right now. Check your connection and try again.</string>
+    <string name="social_add_youtube">Add YouTube channel</string>
+    <string name="social_add_youtube_label">Channel</string>
+    <string name="social_add_youtube_placeholder">\@NHL</string>
+    <string name="social_add_youtube_hint">Its \@handle, or a link to the channel</string>
+    <string name="social_add_youtube_error_invalid">Enter a handle like \@NHL, or a youtube.com channel link</string>
+    <string name="social_add_youtube_error_not_found">No channel found</string>
+    <string name="social_add">Add</string>
+    <string name="social_video_meta">%1$s \u00B7 %2$s</string>
+    <plurals name="social_views">
+        <item quantity="one">%s view</item>
+        <item quantity="other">%s views</item>
+    </plurals>
+    <string name="social_short">Short</string>
+    <string name="social_name_with_platform">%1$s (%2$s)</string>
+    <string name="social_filter_accounts">Filter by account</string>
+    <string name="social_clear_filter">Show all accounts</string>
+    <string name="social_search_accounts">Search accounts</string>
+    <string name="social_search_no_accounts">No matching accounts</string>
+    <string name="social_remove_account">Remove %1$s</string>
+    <string name="social_removed">Removed %1$s</string>
+    <string name="undo">Undo</string>
+    <string name="cancel">Cancel</string>
 </resources>

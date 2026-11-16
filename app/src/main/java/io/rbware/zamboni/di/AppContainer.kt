@@ -22,9 +22,16 @@ import io.rbware.zamboni.data.scores.apiGameIdOrNull
 import io.rbware.zamboni.data.scores.isNahlGameId
 import io.rbware.zamboni.data.scores.NhlScoresRepository
 import io.rbware.zamboni.data.scores.ScoresRepository
+import io.rbware.zamboni.data.social.MastodonClient
+import io.rbware.zamboni.data.social.SocialFeedRepository
+import io.rbware.zamboni.data.social.SocialSourceRepository
+import io.rbware.zamboni.data.social.YouTubeClient
 import io.rbware.zamboni.data.teams.CombinedTeamRepository
 import io.rbware.zamboni.data.teams.PlaceholderTeamRepository
 import io.rbware.zamboni.data.teams.TeamRepository
+import io.rbware.zamboni.notifications.NotificationChecker
+import io.rbware.zamboni.notifications.NotificationStateStore
+import io.rbware.zamboni.notifications.Notifier
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -37,6 +44,8 @@ private val Context.userPreferencesDataStore by preferencesDataStore(
     produceMigrations = { listOf(LegacyPreferencesMigration) },
 )
 
+private val Context.notificationStateDataStore by preferencesDataStore(name = "notification_state")
+
 /**
  * Manual dependency container, created once in [io.rbware.zamboni.ZamboniApplication].
  * Swap the placeholder repositories for real implementations here as they are built.
@@ -48,8 +57,11 @@ class AppContainer(context: Context) {
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .callTimeout(20, TimeUnit.SECONDS)
         .addInterceptor { chain ->
+            val request = chain.request()
+            // Requests that need a specific User-Agent (e.g. YouTube pages) set their own.
+            if (request.header("User-Agent") != null) return@addInterceptor chain.proceed(request)
             chain.proceed(
-                chain.request().newBuilder()
+                request.newBuilder()
                     .header("User-Agent", "Zamboni-Android/${BuildConfig.VERSION_NAME}")
                     .build(),
             )
@@ -115,4 +127,26 @@ class AppContainer(context: Context) {
     val newsSourceRepository: NewsSourceRepository = StaticNewsSourceRepository()
 
     val newsRepository: NewsRepository = RssNewsRepository(okHttpClient)
+
+    /** Built-in accounts (see [io.rbware.zamboni.data.social.SocialSources]) plus the user's own. */
+    val socialSourceRepository = SocialSourceRepository(userPreferencesRepository)
+
+    val mastodonClient = MastodonClient(okHttpClient)
+
+    val youTubeClient = YouTubeClient(okHttpClient)
+
+    val socialFeedRepository = SocialFeedRepository(mastodonClient, youTubeClient)
+
+    val notifier = Notifier(context)
+
+    /** Used by the background notification checks; see [io.rbware.zamboni.notifications.NotificationScheduler]. */
+    val notificationChecker = NotificationChecker(
+        userPreferencesRepository = userPreferencesRepository,
+        scoresRepository = scoresRepository,
+        teamRepository = teamRepository,
+        newsSourceRepository = newsSourceRepository,
+        newsRepository = newsRepository,
+        stateStore = NotificationStateStore(context.notificationStateDataStore),
+        notifier = notifier,
+    )
 }

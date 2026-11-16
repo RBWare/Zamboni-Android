@@ -2,19 +2,18 @@ package io.rbware.zamboni.ui.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,39 +28,43 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.rbware.zamboni.BuildConfig
 import io.rbware.zamboni.R
+import io.rbware.zamboni.ui.components.GroupedListItem
+import io.rbware.zamboni.ui.components.groupedItems
 
 /** App name, icon, version, package and developer. */
 @Composable
 fun AboutSection(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        AppIcon(size = 96.dp)
-        Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(24.dp))
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            AboutRow(
-                stringResource(R.string.settings_version),
-                stringResource(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+    val rows = listOf(
+        stringResource(R.string.settings_version) to
+            stringResource(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+        // The installed package, so debug builds show their ".debug" suffix.
+        stringResource(R.string.about_package) to LocalContext.current.packageName,
+        stringResource(R.string.about_developer) to stringResource(R.string.about_developer_name),
+    )
+    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+        item(key = "header") {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                AppIcon(size = 96.dp)
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    stringResource(R.string.about_tagline),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        groupedItems(rows, key = { it.first }) { (label, value), shape ->
+            GroupedListItem(
+                shape = shape,
+                overlineContent = { Text(label) },
+                headlineContent = { Text(value) },
             )
-            // The installed package, so debug builds show their ".debug" suffix.
-            AboutRow(stringResource(R.string.about_package), LocalContext.current.packageName)
-            AboutRow(stringResource(R.string.about_developer), stringResource(R.string.about_developer_name))
         }
     }
-}
-
-@Composable
-private fun AboutRow(label: String, value: String) {
-    ListItem(
-        overlineContent = { Text(label) },
-        headlineContent = { Text(value) },
-    )
 }
 
 /**

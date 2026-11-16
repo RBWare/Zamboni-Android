@@ -1,5 +1,6 @@
 package io.rbware.zamboni
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,17 +23,36 @@ class MainActivity : ComponentActivity() {
         // Hold the splash until we know whether to show onboarding, avoiding a flash of the wrong UI.
         splash.setKeepOnScreenCondition { viewModel.userPreferences.value == null }
         enableEdgeToEdge()
+        // On recreation the launch intent is delivered again; it was already handled.
+        if (savedInstanceState == null) handleNotificationIntent(intent)
         setContent {
-            ZamboniTheme {
-                val preferences by viewModel.userPreferences.collectAsStateWithLifecycle()
+            val preferences by viewModel.userPreferences.collectAsStateWithLifecycle()
+            ZamboniTheme(dynamicColor = preferences?.dynamicColor ?: true) {
                 Crossfade(targetState = preferences?.onboardingComplete, label = "root") { onboarded ->
                     when (onboarded) {
                         null -> Unit
                         false -> OnboardingScreen()
-                        true -> ZamboniApp()
+                        true -> {
+                            val openGameId by viewModel.openGameRequest.collectAsStateWithLifecycle()
+                            ZamboniApp(openGameId = openGameId, onOpenGameHandled = viewModel::openGameHandled)
+                        }
                     }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    /** A tapped game notification carries the game to open. */
+    private fun handleNotificationIntent(intent: Intent) {
+        intent.getStringExtra(EXTRA_GAME_ID)?.let(viewModel::openGame)
+    }
+
+    companion object {
+        const val EXTRA_GAME_ID = "io.rbware.zamboni.extra.GAME_ID"
     }
 }

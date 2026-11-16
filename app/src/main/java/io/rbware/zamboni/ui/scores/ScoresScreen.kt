@@ -99,10 +99,20 @@ import java.time.ZoneOffset
 @Composable
 fun ScoresScreen(
     modifier: Modifier = Modifier,
+    openGameId: String? = null,
+    onOpenGameHandled: () -> Unit = {},
     viewModel: ScoresViewModel = viewModel(factory = ScoresViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedGameId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Opened from a notification: show that game's details.
+    LaunchedEffect(openGameId) {
+        if (openGameId != null) {
+            selectedGameId = openGameId
+            onOpenGameHandled()
+        }
+    }
     val sideBySide = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo()).maxHorizontalPartitions > 1
 
     BackHandler(enabled = selectedGameId != null) { selectedGameId = null }

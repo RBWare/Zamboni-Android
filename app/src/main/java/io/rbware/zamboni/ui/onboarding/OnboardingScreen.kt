@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rbware.zamboni.R
 import io.rbware.zamboni.ui.preferences.NewsSourcePicker
 import io.rbware.zamboni.ui.preferences.NotificationPicker
+import io.rbware.zamboni.ui.preferences.SocialSourcePicker
 import io.rbware.zamboni.ui.preferences.TeamPicker
 import io.rbware.zamboni.ui.preferences.rememberNotificationPermissionRequester
 
@@ -52,6 +53,8 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
     BackHandler(enabled = !state.isFirstStep, onBack = viewModel::back)
 
     Scaffold(
+        // Grouped pickers draw their rows on surfaceBright; this background sets them apart.
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
             OnboardingButtons(
                 state = state,
@@ -99,6 +102,9 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = Onboar
                         }
                         OnboardingStep.NEWS -> StepScaffold(R.string.onboarding_news_title, R.string.onboarding_news_body) {
                             NewsSourcePicker(state.newsSources, state.newsSourceIds, viewModel::toggleNewsSource)
+                        }
+                        OnboardingStep.SOCIAL -> StepScaffold(R.string.onboarding_social_title, R.string.onboarding_social_body) {
+                            SocialSourcePicker(state.socialSources, state.socialSourceIds, viewModel::toggleSocialSource)
                         }
                     }
                 }

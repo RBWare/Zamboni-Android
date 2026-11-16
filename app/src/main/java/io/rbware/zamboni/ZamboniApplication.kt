@@ -11,9 +11,22 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import io.rbware.zamboni.data.logos.TeamLogoPrefetchWorker
+import io.rbware.zamboni.data.model.NotificationType
 import io.rbware.zamboni.di.AppContainer
+import io.rbware.zamboni.notifications.NotificationScheduler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.withIndex
 
 class ZamboniApplication : Application(), SingletonImageLoader.Factory {
+    /** Lives as long as the process; for app-wide work that isn't tied to a screen. */
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     lateinit var container: AppContainer
         private set
 
@@ -23,7 +36,32 @@ class ZamboniApplication : Application(), SingletonImageLoader.Factory {
 
         // Download any team logos that aren't cached yet so they're ready wherever teams appear.
         TeamLogoPrefetchWorker.enqueue(this)
+
+        container.notifier.createChannels()
+        // Start, stop or refresh background notification checks whenever the settings they
+        // depend on change. The first value only makes sure checks are scheduled: this also
+        // runs when WorkManager starts the process for a check, which must not be replaced.
+        container.userPreferencesRepository.userPreferences
+            .map { prefs ->
+                NotificationInputs(
+                    enabled = prefs.onboardingComplete && prefs.notificationTypes.isNotEmpty(),
+                    types = prefs.notificationTypes,
+                    favoriteTeamIds = prefs.favoriteTeamIds,
+                    newsSourceIds = prefs.newsSourceIds,
+                )
+            }
+            .distinctUntilChanged()
+            .withIndex()
+            .onEach { (index, inputs) -> NotificationScheduler.sync(this, inputs.enabled, checkNow = index > 0) }
+            .launchIn(applicationScope)
     }
+
+    private data class NotificationInputs(
+        val enabled: Boolean,
+        val types: Set<NotificationType>,
+        val favoriteTeamIds: Set<String>,
+        val newsSourceIds: Set<String>,
+    )
 
     /**
      * App-wide image loader, used for team logos.
