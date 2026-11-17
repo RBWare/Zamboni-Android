@@ -1,7 +1,7 @@
 # Zamboni
 
 Material 3 Android app (`io.rbware.zamboni`) built with Jetpack Compose, with adaptive layouts for phones, foldables and tablets.
-Version 2.2.1. Scores for the NHL, AHL, SPHL and NAHL, hockey news from several feeds, a Social feed of
+Version 2.3.0. Scores for the NHL, AHL, SPHL and NAHL, hockey news from several feeds, a Social feed of
 Mastodon accounts and YouTube channels, game and news alerts, Live Updates and team radio for
 your favorite teams.
 

@@ -4,9 +4,11 @@ import io.rbware.zamboni.data.model.BroadcastMarket
 import io.rbware.zamboni.data.model.Decision
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.GoalStrength
+import io.rbware.zamboni.data.model.PowerPlay
 import io.rbware.zamboni.data.model.StatValue
 import io.rbware.zamboni.data.model.TeamSide
 import io.rbware.zamboni.data.model.TeamStatType
+import io.rbware.zamboni.data.model.shotsOnGoal
 import io.rbware.zamboni.data.placeholder.PlaceholderHockeyData
 import io.rbware.zamboni.data.remote.NhlApi
 import io.rbware.zamboni.data.remote.NhlLandingResponse
@@ -21,6 +23,7 @@ import io.rbware.zamboni.data.scores.isEmptyNet
 import io.rbware.zamboni.data.scores.toGameDetails
 import io.rbware.zamboni.data.scores.toRecords
 import io.rbware.zamboni.data.scores.toSchedule
+import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -106,6 +109,7 @@ class NhlMapperTest {
         assertEquals(TeamStatType.entries.toList(), details.teamStats.map { it.type })
         val shots = details.teamStats.first { it.type == TeamStatType.SHOTS_ON_GOAL }
         assertEquals(StatValue.Number(33.0), shots.away)
+        assertEquals(33, details.shotsOnGoal?.first)
         val powerPlay = details.teamStats.first { it.type == TeamStatType.POWER_PLAY }
         assertEquals(StatValue.Text("0/2"), powerPlay.away)
         assertEquals(NHL_IDLE_REFRESH, details.suggestedRefresh)
@@ -121,6 +125,28 @@ class NhlMapperTest {
         assertEquals(17, details.goals.first().assists!!.first().seasonTotal)
         assertTrue(details.teamStats.isEmpty())
         assertEquals(NHL_LIVE_GAME_REFRESH, details.suggestedRefresh)
+    }
+
+    @Test
+    fun landing_powerPlay() {
+        // Rangers on a power play with 1:07 left on the penalty (November 16, 2026).
+        val details = load<NhlLandingResponse>("nhl_landing_power_play.json").toGameDetails(null, knownTeams)
+        assertEquals(PowerPlay(TeamSide.HOME, 67), details.powerPlay)
+        // Even strength, or no situation in the data: none.
+        assertNull(load<NhlLandingResponse>("nhl_landing_live.json").toGameDetails(null, knownTeams).powerPlay)
+    }
+
+    @Test
+    fun powerPlay_runsWithTheGameClock() {
+        val asOf = Instant.parse("2026-11-17T01:00:00Z")
+        val running = GameStatus.Live(period = 1, clock = "0:30", secondsRemaining = 30, clockRunning = true, clockAsOf = asOf)
+        val pp = PowerPlay(TeamSide.HOME, 67)
+        assertEquals(57, pp.secondsRemainingAt(running, asOf.plusSeconds(10)))
+        // A stopped clock doesn't use up the penalty.
+        assertEquals(67, pp.secondsRemainingAt(running.copy(clockRunning = false), asOf.plusSeconds(10)))
+        // Used up: none shown.
+        assertNull(PowerPlay(TeamSide.HOME, 5).secondsRemainingAt(running, asOf.plusSeconds(10)))
+        assertNull(PowerPlay(TeamSide.AWAY, null).secondsRemainingAt(running, asOf))
     }
 
     @Test

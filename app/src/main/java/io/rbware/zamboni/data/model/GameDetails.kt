@@ -14,7 +14,38 @@ data class GameDetails(
     val broadcasts: List<Broadcast> = emptyList(),
     /** Each team's live radio stream, when the source has one. */
     val radio: List<RadioStream> = emptyList(),
+    /** The power play under way, if any. Only the NHL reports it. */
+    val powerPlay: PowerPlay? = null,
 )
+
+/**
+ * A power play under way.
+ *
+ * @param side the team with the extra skater.
+ * @param secondsRemaining time left on the penalty when the data was produced, if known. It
+ *   counts down with the game clock (see GameStatus.Live.secondsRemainingAt).
+ */
+data class PowerPlay(val side: TeamSide, val secondsRemaining: Int?) {
+    /**
+     * Time left on the penalty at [now]: it runs with the game clock, so it loses as many
+     * seconds as [status]'s clock has since the data was produced. Null if unknown or used up.
+     */
+    fun secondsRemainingAt(status: GameStatus.Live, now: java.time.Instant): Int? {
+        val seconds = secondsRemaining ?: return null
+        val clockNow = status.secondsRemainingAt(now)
+        val elapsed = if (status.secondsRemaining != null && clockNow != null) status.secondsRemaining - clockNow else 0
+        return (seconds - elapsed).takeIf { it > 0 }
+    }
+}
+
+/** Shots on goal from the team stats, as (away, home), or null if the source has none. */
+val GameDetails.shotsOnGoal: Pair<Int, Int>?
+    get() {
+        val stat = teamStats.firstOrNull { it.type == TeamStatType.SHOTS_ON_GOAL } ?: return null
+        val away = (stat.away as? StatValue.Number)?.value?.toInt() ?: return null
+        val home = (stat.home as? StatValue.Number)?.value?.toInt() ?: return null
+        return away to home
+    }
 
 /** Who a broadcast is for. */
 enum class BroadcastMarket { NATIONAL, HOME, AWAY }

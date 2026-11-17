@@ -24,6 +24,7 @@ import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.NewsArticle
 import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.model.PowerPlay
 import io.rbware.zamboni.data.model.Team
 import io.rbware.zamboni.data.model.TeamSide
 
@@ -208,12 +209,20 @@ class Notifier(private val context: Context) {
 
     /**
      * A Live Update for [game]: an ongoing notification Android shows as a chip in the status
-     * bar (with [favoriteTeamIds]'s team's score first) and at the top of the shade. Counts the
-     * period clock down on its own while it runs.
+     * bar (with [favoriteTeamIds]'s team's score first) and at the top of the shade, with the period
+     * and time left on the second line.
      *
      * @param lastGoal the most recent goal, when known.
+     * @param shots shots on goal as (away, home), when known.
+     * @param powerPlay the power play under way, if any.
      */
-    fun buildLiveUpdate(game: Game, lastGoal: Goal?, favoriteTeamIds: Set<String>): Notification {
+    fun buildLiveUpdate(
+        game: Game,
+        lastGoal: Goal?,
+        favoriteTeamIds: Set<String>,
+        shots: Pair<Int, Int>? = null,
+        powerPlay: PowerPlay? = null,
+    ): Notification {
         val awayScore = game.awayScore ?: 0
         val homeScore = game.homeScore ?: 0
         val favoriteIsAway = game.away.id in favoriteTeamIds && game.home.id !in favoriteTeamIds
@@ -240,23 +249,31 @@ class Notifier(private val context: Context) {
             is GameStatus.Live -> {
                 builder.setShortCriticalText(chip)
                 val period = status.period?.let(::periodLabel)
-                val seconds = status.secondsRemaining
-                val text = when {
+                // While the clock runs, the time left as of now (the data may be a few seconds
+                // old). The service reposts every few seconds during play, so it stays close; a
+                // system countdown beside the title would crowd out the score.
+                val now = java.time.Instant.now()
+                val clock = status.secondsRemainingAt(now)
+                    ?.takeIf { status.clockRunning }
+                    ?.let { "%d:%02d".format(it / 60, it % 60) }
+                    ?: status.clock
+                val state = when {
                     status.shootout -> context.getString(R.string.period_shootout)
                     status.intermission && period != null -> context.getString(R.string.status_intermission, period)
-                    period != null && status.clock != null -> context.getString(R.string.live_period_clock, period, status.clock)
+                    period != null && clock != null -> context.getString(R.string.live_period_clock, period, clock)
                     else -> period ?: context.getString(R.string.status_in_progress)
                 }
-                builder.setContentText(text)
-                if (status.clockRunning && seconds != null && !status.intermission) {
-                    // The system counts down to the end of the period between updates.
-                    val asOf = status.clockAsOf ?: java.time.Instant.now()
-                    builder.setUsesChronometer(true)
-                        .setChronometerCountDown(true)
-                        .setWhen(asOf.plusSeconds(seconds.toLong()).toEpochMilli())
-                        .setShowWhen(true)
-                        .setSubText(period)
+                // "1st, 2:43 left, Shots 8-6, NYR PP 1:07": the power play only while one is on.
+                val shotsText = shots?.takeUnless { status.shootout }
+                    ?.let { (away, home) -> context.getString(R.string.live_shots, away, home) }
+                val powerPlayText = powerPlay?.takeUnless { status.shootout }?.let { pp ->
+                    val team = if (pp.side == TeamSide.HOME) game.home else game.away
+                    pp.secondsRemainingAt(status, now)
+                        ?.let { context.getString(R.string.live_power_play, team.abbreviation, "%d:%02d".format(it / 60, it % 60)) }
+                        ?: context.getString(R.string.live_power_play_no_time, team.abbreviation)
                 }
+                val text = listOfNotNull(state, shotsText, powerPlayText).joinToString(", ")
+                builder.setContentText(text)
                 lastGoal?.let { goal ->
                     val team = if (goal.side == TeamSide.HOME) game.home else game.away
                     val line = context.getString(R.string.live_last_goal, scorerLabel(goal.scorer), team.abbreviation)

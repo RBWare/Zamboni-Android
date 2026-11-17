@@ -21,7 +21,9 @@ import io.rbware.zamboni.data.model.Game
 import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.NotificationType
+import io.rbware.zamboni.data.model.PowerPlay
 import io.rbware.zamboni.data.model.goalAtScore
+import io.rbware.zamboni.data.model.shotsOnGoal
 import java.time.Duration
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
@@ -140,7 +142,13 @@ class LiveUpdateAlarmReceiver : BroadcastReceiver() {
 }
 
 /** A game to show, with its newest goal when the details were loaded. */
-data class LiveGame(val game: Game, val lastGoal: Goal?)
+/** A game for a Live Update, with what its details add when they loaded. */
+data class LiveGame(
+    val game: Game,
+    val lastGoal: Goal?,
+    val shots: Pair<Int, Int>? = null,
+    val powerPlay: PowerPlay? = null,
+)
 
 /**
  * Posts one Live Update per game and removes stale ones. The first game's can be the
@@ -233,7 +241,7 @@ class LiveGameService : Service() {
                 val shown = wanted.map { game -> withDetails(game) }
                 if (shown.isNotEmpty()) {
                     poster.post(shown, prefs.favoriteTeamIds, foreground = ::goForeground) { live ->
-                        container.notifier.buildLiveUpdate(live.game, live.lastGoal, prefs.favoriteTeamIds)
+                        container.notifier.buildLiveUpdate(live.game, live.lastGoal, prefs.favoriteTeamIds, live.shots, live.powerPlay)
                     }
                 }
                 val delay = shown.mapNotNull { it.refresh }.minOrNull()?.coerceIn(MIN_REFRESH, MAX_REFRESH) ?: MAX_REFRESH
@@ -250,7 +258,7 @@ class LiveGameService : Service() {
     private val LiveGame.refresh: Duration? get() = refreshes[game.id]
     private val refreshes = mutableMapOf<String, Duration?>()
 
-    /** Live games get their details (fresher than the schedule, and the last goal). */
+    /** Live games get their details (fresher than the schedule, plus the last goal, shots and power play). */
     private suspend fun withDetails(game: Game): LiveGame {
         if (game.status !is GameStatus.Live) {
             refreshes[game.id] = MAX_REFRESH
@@ -263,7 +271,7 @@ class LiveGameService : Service() {
             // Only the goal that made the score shown: the details can lag the score, and their
             // newest goal would then be an earlier one.
             val lastGoal = details.goals.goalAtScore(shown.awayScore ?: 0, shown.homeScore ?: 0)
-            LiveGame(shown, lastGoal)
+            LiveGame(shown, lastGoal, details.shotsOnGoal, details.powerPlay)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

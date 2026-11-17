@@ -9,6 +9,7 @@ import io.rbware.zamboni.data.model.GameStatus
 import io.rbware.zamboni.data.model.Goal
 import io.rbware.zamboni.data.model.GoalPlayer
 import io.rbware.zamboni.data.model.GoalStrength
+import io.rbware.zamboni.data.model.PowerPlay
 import io.rbware.zamboni.data.model.RadioStream
 import io.rbware.zamboni.data.model.Schedule
 import io.rbware.zamboni.data.model.Team
@@ -23,6 +24,7 @@ import io.rbware.zamboni.data.remote.NhlLandingResponse
 import io.rbware.zamboni.data.remote.NhlRightRailResponse
 import io.rbware.zamboni.data.remote.NhlScoreGameDto
 import io.rbware.zamboni.data.remote.NhlScoreResponse
+import io.rbware.zamboni.data.remote.NhlSituationDto
 import io.rbware.zamboni.data.remote.NhlStandingsResponse
 import io.rbware.zamboni.data.remote.PeriodDto
 import java.time.Instant
@@ -114,7 +116,20 @@ fun NhlLandingResponse.toGameDetails(
             awayTeam.radioLink?.takeIf { it.startsWith("https://") }?.let { RadioStream(TeamSide.AWAY, it) },
             homeTeam.radioLink?.takeIf { it.startsWith("https://") }?.let { RadioStream(TeamSide.HOME, it) },
         ),
+        powerPlay = situation?.takeIf { status is GameStatus.Live }?.toPowerPlay(),
     )
+}
+
+/** The power play, when exactly one team is on one ("PP"; an empty net alone isn't). */
+private fun NhlSituationDto.toPowerPlay(): PowerPlay? {
+    val away = awayTeam?.situationDescriptions.orEmpty().contains("PP")
+    val home = homeTeam?.situationDescriptions.orEmpty().contains("PP")
+    val side = when {
+        home && !away -> TeamSide.HOME
+        away && !home -> TeamSide.AWAY
+        else -> return null
+    }
+    return PowerPlay(side, secondsRemaining)
 }
 
 private fun NhlBroadcastDto.toBroadcast(): Broadcast? {

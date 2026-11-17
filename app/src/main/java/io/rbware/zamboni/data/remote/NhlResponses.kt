@@ -64,6 +64,24 @@ data class NhlLandingResponse(
     /** Missing before the game starts. */
     val summary: NhlSummaryDto? = null,
     val tvBroadcasts: List<NhlBroadcastDto> = emptyList(),
+    /** Skaters on the ice, during play. Missing at even strength in some games. */
+    val situation: NhlSituationDto? = null,
+)
+
+/** Who has how many skaters, e.g. a home power play: home strength 5, away 4, home "PP". */
+@Serializable
+data class NhlSituationDto(
+    val awayTeam: NhlSituationTeamDto? = null,
+    val homeTeam: NhlSituationTeamDto? = null,
+    /** Time left on the penalty behind it. */
+    val secondsRemaining: Int? = null,
+)
+
+@Serializable
+data class NhlSituationTeamDto(
+    val strength: Int? = null,
+    /** e.g. "PP" (power play), "EN" (empty net). */
+    val situationDescriptions: List<String> = emptyList(),
 )
 
 /** One TV or streaming broadcast. */
